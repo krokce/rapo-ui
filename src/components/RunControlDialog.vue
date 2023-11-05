@@ -1,0 +1,93 @@
+<template>
+  <span @click="visible = true">
+    <slot></slot>
+  </span>
+
+  <q-dialog v-model="visible">
+    <q-card class="column my-card" style="width: auto">
+      <q-card-section class="col bg-blue-grey-2">
+        <div class="row no-wrap items-center">
+          <div class="text-h6 ellipsis">{{ control.control_name }}</div>
+        </div>
+      </q-card-section>
+
+      <q-card-section class="column items-center">
+        <div class="q-pa-md">
+          Run for <span v-if="!range">date</span> <span v-else>range</span>:
+          <p>{{ selectDate }}</p>
+
+          <div class="q-gutter-md row items-start">
+            <q-date v-model="selectDate" :range="range" today-btn mask="YYYY-MM-DD" color="teal" flat />
+          </div>
+          <div>
+            <q-toggle label="Run for date range" color="teal" :false-value="false" :true-value="true" v-model="range" @update:model-value="rangeChange" />
+          </div>
+        </div>
+      </q-card-section>
+
+      <q-separator />
+
+      <q-card-actions align="right">
+        <q-btn v-close-popup="-1" flat color="primary" label="Run" icon="fas fa-play" @click="runControl" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+</template>
+
+<script>
+import { useQuasar } from "quasar";
+
+export default {
+  props: ["control"],
+  data() {
+    return {
+      visible: false,
+      range: false,
+      selectDate: new Date().toISOString().substring(0, 10),
+      $q: useQuasar(),
+    };
+  },
+  methods: {
+    rangeChange() {
+      var date = new Date();
+      var toDate = new Date(date.setDate(date.getDate() - 2)).toISOString().substring(0, 10);
+      var fromDate = new Date(date.setDate(date.getDate() - 1)).toISOString().substring(0, 10);
+      if (this.range) {
+        this.selectDate = {
+          from: fromDate,
+          to: toDate,
+        };
+      } else {
+        this.selectDate = fromDate;
+      }
+    },
+    runControl() {
+      this.$q.loadingBar.start();
+
+      var url = "";
+      if (this.range) {
+        url =
+          "/api/run-control?name=" + this.control.control_name + "&date_from=" + this.selectDate.from + "&date_to=" + this.selectDate.to;
+      } else {
+        url = "/api/run-control?name=" + this.control.control_name + "&date=" + this.selectDate;
+      }
+
+      fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+      })
+        .then((response) => {
+          if (response.ok) {
+            this.$q.notify({ type: "positive", message: "Control " + this.control.control_name + " queued for execution" });
+            return response.json();
+          } else {
+            this.$q.notify({ type: "negative", message: "Control " + this.control.control_name + " failed" });
+          }
+        })
+        .then(() => {
+          this.$q.loadingBar.stop();
+        });
+    },
+  },
+};
+</script>
