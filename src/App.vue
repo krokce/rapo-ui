@@ -72,11 +72,6 @@ export default {
           text: "Results",
           route: "/results",
         },
-        {
-          icon: "fas fa-eye",
-          text: "Monitor",
-          route: "/monitor",
-        },
       ],
       $q: useQuasar(),
     };
@@ -91,7 +86,7 @@ export default {
         this.$q.cookies.remove("rapo_token");
       }
       this.removeToken();
-      this.$router.push("token")
+      this.$router.push("token");
     },
   },
   computed: {
@@ -104,7 +99,7 @@ export default {
         return this.updateSearch(value);
       },
     },
-  }
+  },
 };
 </script>
 
