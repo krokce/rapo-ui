@@ -293,22 +293,20 @@ export default {
 
       if (scheduleString) {
         ret = JSON.parse(scheduleString);
-
         // Determine schedule type
-        if (!this.scheduleType) {
-          if (
-            String(scheduleString).indexOf("/") > -1 ||
-            String(scheduleString).indexOf("-") > -1 ||
-            (String(ret.hour) + String(ret.min) + String(ret.sec)).indexOf(",") > -1
-          ) {
-            this.scheduleType = "X";
-          } else if (ret.mday) {
-            this.scheduleType = "M";
-          } else if (ret.wday) {
-            this.scheduleType = "W";
-          } else {
-            this.scheduleType = "D";
-          }
+        if (
+          String(scheduleString).indexOf("/") > -1 ||
+          String(scheduleString).indexOf("-") > -1 ||
+          (String(ret.mday).indexOf(",") > -1 && String(ret.wday).indexOf(",") > -1) ||
+          (String(ret.hour) + String(ret.min) + String(ret.sec)).indexOf(",") > -1
+        ) {
+          this.scheduleType = "X";
+        } else if (ret.mday) {
+          this.scheduleType = "M";
+        } else if (ret.wday) {
+          this.scheduleType = "W";
+        } else {
+          this.scheduleType = "D";
         }
 
         // Convert components to arrays in case of simple scheduler
@@ -330,8 +328,6 @@ export default {
       if (!this.scheduleTimepicker) {
         this.scheduleTimepicker = String(ret.hour).padStart(2, "0") + ":" + String(ret.min).padStart(2, "0") + ":" + String(ret.sec).padStart(2, "0");
       }
-
-      // Determine type to show the most appropriate edit controls
 
       return ret;
     },
