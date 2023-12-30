@@ -2,11 +2,22 @@ import { createRouter, createWebHistory } from "vue-router";
 import ControlCatalogue from "./components/ControlCatalogue.vue";
 import ControlEdit from "./components/ControlEdit.vue";
 import ControlResults from "./components/ControlResults.vue";
-import ControlMonitor from "./components/ControlMonitor.vue";
 import TokenBox from "./components/TokenBox.vue";
 import store from "./store";
 
 const router = createRouter({
+  // Fixes issue with page router navigates to renders scrolled to the bottom
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return savedPosition;
+    } else if (to.hash) {
+      return {
+        selector: to.hash,
+      };
+    } else {
+      return { top: 0 };
+    }
+  },
   history: createWebHistory(),
   routes: [
     { path: "/", redirect: "/controls" },
@@ -30,18 +41,11 @@ const router = createRouter({
       props: true,
     },
     {
-      name: "monitor",
-      path: "/monitor",
-      meta: { hideSearch: true },
-      component: ControlMonitor,
-      props: true,
-    },
-    {
       name: "token",
       path: "/token",
       meta: { hideSearch: true },
       component: TokenBox,
-    },    
+    },
     { path: "/:notfound(.*)", redirect: "/controls" },
   ],
 });
@@ -57,7 +61,6 @@ router.beforeEach(function (to, from, next) {
     }
     next();
   }
-
 });
 
 export default router;
