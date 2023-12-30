@@ -42,10 +42,10 @@ export default {
 
       if (!validated) {
         this.connectError = true;
-        this.$q.cookies.remove("rapo_token", token, { SameSite: "Lax" });
+        this.$q.cookies.remove("rapo_token");
       } else {
         if (this.rememberToken) {
-          this.$q.cookies.set("rapo_token", token, { SameSite: "Lax" });
+          this.$q.cookies.set("rapo_token", token, { SameSite: "Strict", expires: "365d" });
         }
         this.$router.push("/");
       }
