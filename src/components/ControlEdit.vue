@@ -17,6 +17,28 @@
             @keyup="control && control.control_name && (control.control_name = control.control_name.toUpperCase())" />
 
           <q-input class="col" outlined v-model="control.control_alias" label="Control alias" />
+
+          <q-select
+            class="col-2"
+            outlined
+            v-model="controlVersion"
+            use-input
+            hide-selected
+            fill-input
+            input-debounce="0"
+            label="Version"
+            :options="controlVersions"
+            @filter="filterDatasourceList"
+            @update:model-value="controlVersionChanged">
+            <template v-slot:prepend>
+              <q-icon name="fas fa-tag" size="sm" @click.stop.prevent />
+            </template>
+            <template v-slot:no-option>
+              <q-item>
+                <q-item-section class="text-grey"> No past versions </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
         </div>
 
         <div class="row q-mx-xl q-mb-md q-gutter-md">
@@ -377,6 +399,8 @@ export default {
   data() {
     return {
       control: {},
+      controlVersions: [],
+      controlVersion: "ACTUAL",
       datasourceColumns: null,
       datasourceDateColumns: null,
       datasourceAColumns: null,
@@ -519,6 +543,60 @@ export default {
         this.control.source_date_field_b = data[0];
       });
     },
+    async getControlVersions(controlId) {
+      const response = await fetch("/api/get-control-versions?control_id=" + controlId, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${this.$store.getters.getToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        this.controlVersions = data;
+        this.controlVersions.forEach((element) => {
+          element.label = new Date(element.audit_date).toISOString("de-DE").substring(0, 19).replace("T", " ");
+        });
+        this.control.label = "ACTUAL";
+        this.controlVersions.unshift(this.control);
+      }
+    },
+    controlVersionChanged() {
+      this.control = this.controlVersion;
+
+      try {
+        if (this.control.control_type === "ANL") {
+          this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
+          this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
+        } else {
+          this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
+          this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
+          this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
+          this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
+        }
+      } catch (err) {
+        console.log(err);
+      }
+
+      // Update UI switch buttons "inputs" based on the present fields
+      if (this.control.source_filter || this.control.source_filter_a || this.control.source_filter_b) {
+        this.inputs.push("filter");
+      }
+      if (this.control.case_config || this.control.result_config) {
+        this.inputs.push("case_config");
+      }
+      if (this.control.preparation_sql) {
+        this.inputs.push("preparation_sql");
+      }
+      if (this.control.prerequisite_sql) {
+        this.inputs.push("prerequisite_sql");
+      }
+      if (this.control.completion_sql) {
+        this.inputs.push("completion_sql");
+      }
+
+      this.withDeleteionDrop = this.control.with_drop === "Y" ? "drop" : this.control.with_deletion === "Y" ? "deletion" : "N";
+    },
     deletionDropChanged() {
       if (this.withDeleteionDrop === "N") {
         this.control.with_deletion = "N";
@@ -593,6 +671,7 @@ export default {
             type: "positive",
             message: "Control: " + this.control.control_name + " was saved successfully.",
           });
+          // reload "Controls" page if control attributes changed
           this.$router.push({ name: "controls" });
         })
         .catch((error) => {
@@ -641,6 +720,7 @@ export default {
 
     if (controlData) {
       this.control = controlData;
+      this.getControlVersions(this.controlId);
 
       // Force insert instead of update if clone
       if (this.$route.query.clone) {
