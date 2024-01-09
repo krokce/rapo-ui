@@ -55,10 +55,11 @@
                   color="deep-orange"
                   text-color="white"
                   @click="showErrorDialog(control)" />
-                <q-avatar v-if="control.status == 'Success'" icon="fas fa-check-circle" color="green" text-color="white" />
+                <q-avatar v-if="control.status == 'Running'" icon="fas fa-sync fa-spin" color="blue" text-color="white" @click="showCancelDialog(control)" />
+                <q-avatar v-if="control.status == 'Success'" icon="fas fa-check-circle" color="green" text-color="white" @click="showRevokeDialog(control)" />
                 <q-avatar v-if="control.status == 'Initiated'" icon="fas fa-play-circle" color="blue" text-color="white" />
-                <q-avatar v-if="control.status == 'Deleted'" icon="fas fa-times-circle" color="grey" text-color="white" />
-                <q-avatar v-if="control.status == 'Running'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
+                <q-avatar v-if="control.status == 'Revoked'" icon="fas fa-minus-circle" color="grey" text-color="white" />
+                <q-avatar v-if="control.status == 'Canceled'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
                 {{ control.status }}
               </q-chip>
             </td>
@@ -101,6 +102,66 @@ export default {
         title: control.control_name,
         message: control.text_error,
       });
+    },
+    showCancelDialog(control) {
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message: "Do you really want to stop the execution of this control?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          fetch("/api/cancel-control?id=" + control.process_id, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "Control run '" + control.control_name + " PID:" + control.process_id + "' was canceled" });
+                control.status = "Canceled";
+              } else {
+                this.$q.notify({ type: "negative", message: "Stopping control run '" + control.control_name + " PID:" + control.process_id + "' failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
+    },
+    showRevokeDialog(control) {
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message: "Do you really want to revoke this control run?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          fetch("/api/revoke-control-run?id=" + control.process_id, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "Control run '" + control.control_name + " PID:" + control.process_id + "' was revoked" });
+                control.status = "Revoked";
+              } else {
+                this.$q.notify({ type: "negative", message: "Revoke of control run '" + control.control_name + " PID:" + control.process_id + "' failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
     },
     startRefreshTimer() {
       this.refreshTimer = setInterval(this.updateControlResults, 10000);
