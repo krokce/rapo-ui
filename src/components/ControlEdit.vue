@@ -568,11 +568,14 @@ export default {
         if (this.control.control_type === "ANL") {
           this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
+          this.getDatasourceDateColumns(this.control.source_name).then((data) => (this.datasourceDateColumns = data));
         } else {
           this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
           this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
+          this.getDatasourceDateColumns(this.control.source_name_a).then((data) => (this.datasourceADateColumns = data));
           this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
+          this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
         }
       } catch (err) {
         console.log(err);
@@ -732,11 +735,14 @@ export default {
         if (this.control.control_type === "ANL") {
           this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
+          this.getDatasourceDateColumns(this.control.source_name).then((data) => (this.datasourceDateColumns = data));
         } else {
           this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
           this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
+          this.getDatasourceDateColumns(this.control.source_name_a).then((data) => (this.datasourceADateColumns = data));
           this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
+          this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
         }
       } catch (err) {
         console.log(err);

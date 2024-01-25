@@ -20,10 +20,10 @@ export default {
         LoadingBar.stop();
       });
   },
-  updateControlResults(context, payload) {
+  updateControlResults(context) {
     LoadingBar.start();
 
-    console.log("Call /api/get-control-runs with param:", payload);
+    // console.log("Call /api/get-control-runs with param:", payload);
 
     fetch("/api/get-control-runs", {
       method: "GET",
