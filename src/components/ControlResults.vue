@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <h1>{{ filteredControlResultsLen }} Control result<span v-if="filteredControlResultsLen != 1">s</span></h1>
+    <h1>Last {{ filteredControlResultsLen }} control result<span v-if="filteredControlResultsLen != 1">s</span></h1>
 
     <div class="q-pa-md">
       <q-markup-table dense="true">
@@ -23,13 +23,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="control in filteredControlResults" :key="control.process_id">
-            <td class="text-left">
+          <tr v-for="(control, index) in filteredControlResults" :key="control.process_id">
+            <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <strong>{{ toDateTimeString(control.start_date) }}</strong>
             </td>
-            <td class="text-center">{{ round(control.duration_minutes, 2) }} min</td>
-            <td class="text-left text-weight-bold text-blue-grey-7">{{ control.process_id }}</td>
-            <td class="text-left text-weight-bold text-teal">
+            <td class="text-center" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.duration_minutes, 2) }} min</td>
+            <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.process_id }}</td>
+            <td class="text-left text-weight-bold text-teal" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <router-link
                 :to="{
                   name: 'edit-control',
@@ -38,16 +38,16 @@
                 {{ control.control_name }}
               </router-link>
             </td>
-            <td class="text-left">{{ toDateString(control.date_from) }}</td>
-            <td class="text-left">{{ toDateString(control.date_to) }}</td>
-            <td class="text-right">{{ control.fetched_a }}</td>
-            <td class="text-right">{{ control.fetched_b }}</td>
-            <td class="text-right">{{ control.errors_a }}</td>
-            <td class="text-right">{{ control.errors_b }}</td>
-            <td class="text-right text-red">{{ round(control.error_level_a, 2) }}%</td>
-            <td class="text-right text-red">{{ round(control.error_level_b, 2) }}%</td>
-            <td class="text-right">{{ control.prerequisite_value }}</td>
-            <td class="text-left">
+            <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_from) }}</td>
+            <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_to) }}</td>
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.fetched_a }}</td>
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.fetched_b }}</td>
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.errors_a }}</td>
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.errors_b }}</td>
+            <td class="text-right text-red" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.error_level_a, 2) }}%</td>
+            <td class="text-right text-red" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.error_level_b, 2) }}%</td>
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.prerequisite_value }}</td>
+            <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-chip class="cursor-pointer">
                 <q-avatar
                   v-if="control.status == 'Error'"
@@ -86,6 +86,16 @@ export default {
   },
   methods: {
     ...mapActions(["updateControlResults"]),
+    newDaySeparator(index) {
+      if (index > 0) {
+        const prev_date = this.toDateString(this.filteredControlResults[index - 1].start_date);
+        const curr_date = this.toDateString(this.filteredControlResults[index].start_date);
+        if (prev_date != curr_date) {
+          return true;
+        }
+      }
+      return false;
+    },
     toDateString(val) {
       var ret = new Date(val).toISOString("de-DE").substring(0, 10);
       return ret;
@@ -199,5 +209,9 @@ a:hover {
 
 a:visited {
   color: #009688;
+}
+
+.new-day-separator {
+  border-top: 2px solid #cfd8dc !important;
 }
 </style>
