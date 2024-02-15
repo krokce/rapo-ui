@@ -575,7 +575,7 @@ export default {
           this.getDatasourceDateColumns(this.control.source_name_a).then((data) => (this.datasourceADateColumns = data));
           this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
-          this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
+          this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBDateColumns = data));
         }
       } catch (err) {
         console.log(err);
@@ -612,7 +612,22 @@ export default {
         this.control.with_drop = "Y";
       }
     },
+    addNewLineIfLastLineStartsWithDoubleDash(str) {
+      if (str && str.includes("--") && str.substr(str.length - 1) != "\n") {
+        return str + "\n";
+      }
+      return str;
+    },
     save() {
+      // Add new line if last line contains a comment to avoid RAPO SQL builder issue
+      this.control.source_filter = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter);
+      this.control.source_filter_a = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter_a);
+      this.control.source_filter_b = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter_b);
+
+      this.control.rule_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.rule_config);
+      this.control.error_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.error_config);
+      this.control.case_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.case_config);
+
       // Stringify the JSON obejcts holding the columns values
       if (this.control.output_table_columns && this.control.output_table_columns.length) {
         this.control.output_table = JSON.stringify({
@@ -742,7 +757,7 @@ export default {
           this.getDatasourceDateColumns(this.control.source_name_a).then((data) => (this.datasourceADateColumns = data));
           this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
-          this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
+          this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBDateColumns = data));
         }
       } catch (err) {
         console.log(err);

@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <h1>Last {{ filteredControlResultsLen }} control result<span v-if="filteredControlResultsLen != 1">s</span></h1>
+    <h1>Last control result<span v-if="filteredControlResultsLen != 1">s</span></h1>
 
     <div class="q-pa-md">
       <q-markup-table dense="true">
