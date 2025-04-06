@@ -65,14 +65,14 @@
     <q-separator />
 
     <q-card-section class="col">
-      {{ control.control_desc }}
+      {{ control.control_description }}
     </q-card-section>
 
     <q-separator />
 
     <q-card-section class="col-auto q-pa-sm">
       <div class="row justify-start">
-        <schedule-present-box :schedule="control.schedule"></schedule-present-box>
+        <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>
         <q-chip square color="blue-grey-7" text-color="white" icon="fas fa-history fa-sm">
           {{ control.days_back }} day<span v-if="control.days_back > 1">s&nbsp;</span>
           back

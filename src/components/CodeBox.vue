@@ -3,21 +3,11 @@
     <span class="row items-center justify-between">
       <label>{{ label }}</label>
       <div>
-        <q-btn
-          v-if="code"
-          class="col-auto"
-          flat
-          size="xs"
-          icon="fas fa-times"
-          @click="clearCode" />
+        <q-btn v-if="code" class="col-auto" flat size="xs" icon="fas fa-times" @click="clearCode" />
         <q-btn class="col-auto" flat size="sm" label="Example">
           <q-menu>
             <q-list dense class="text-no-wrap">
-              <q-item
-                clickable
-                v-close-popup
-                v-for="menu in menuItems"
-                :key="menu.menuText">
+              <q-item clickable v-close-popup v-for="menu in menuItems" :key="menu.menuText">
                 <q-item-section @click="setCode(menu.exampleText)">
                   {{ menu.menuText }}
                 </q-item-section>
@@ -30,23 +20,10 @@
             </q-list>
           </q-menu>
         </q-btn>
-        <q-btn
-          v-if="1 == 2"
-          class="push-right col-auto"
-          flat
-          size="xs"
-          icon="fas fa-info-circle"
-          @click="printValues" />
+        <q-btn v-if="1 == 2" class="push-right col-auto" flat size="xs" icon="fas fa-info-circle" @click="printValues" />
       </div>
     </span>
-    <codemirror
-      ref="editor"
-      v-model="code"
-      :indent-with-tab="true"
-      :smart-indent="true"
-      :tab-size="2"
-      :extensions="extensions"
-      @ready="handleReady" />
+    <codemirror ref="editor" v-model="code" :indent-with-tab="true" :smart-indent="true" :tab-size="4" :extensions="extensions" @ready="handleReady" />
   </div>
 </template>
 
@@ -84,15 +61,13 @@ export default {
           },
           {
             menuText: "REC Sample conditions (using JSON syntax)",
-            exampleText:
-              '[\n\t{"column_a": "case_type", "column_b": "case_type"}\n]',
+            exampleText: '[\n\t{"column_a": "case_type", "column_b": "case_type"}\n]',
           },
         ],
         rule_config: [
           {
             menuText: "REC Sample conditions (using JSON syntax)",
-            exampleText:
-              '[\n\t{"column_a":"posting_date","column_b":"posting_date"},\n\t{"column_a":"case_type","column_b":"case_type"}\n]',
+            exampleText: '[\n\t{"column_a":"posting_date","column_b":"posting_date"},\n\t{"column_a":"case_type","column_b":"case_type"}\n]',
           },
         ],
         case_config: [
@@ -105,8 +80,7 @@ export default {
         result_config: [
           {
             menuText: "Basic 3 class example",
-            exampleText:
-              "case\n\twhen charge = calc_charge then 1\n\twhen charge != calc_charge then 2\n\twhen calc_charge is null then 3\nend",
+            exampleText: "case\n\twhen charge = calc_charge then 1\n\twhen charge != calc_charge then 2\n\twhen calc_charge is null then 3\nend",
           },
         ],
         source_filter: [
@@ -118,8 +92,7 @@ export default {
         preparation_sql: [
           {
             menuText: "Materialized view refresh",
-            exampleText:
-              "begin\n\tdbms_snapshot.refresh('MVIDS_ACTIVE_5G_HLR', 'c');\nend;",
+            exampleText: "begin\n\tdbms_snapshot.refresh('MVIDS_ACTIVE_5G_HLR', 'c');\nend;",
           },
           {
             menuText: "Truncate and insert into table",

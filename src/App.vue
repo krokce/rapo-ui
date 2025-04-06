@@ -7,8 +7,7 @@
         <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" :to="{ name: 'controls' }">
           <q-icon name="fas fa-poll" color="teal" size="40px" />
           <q-toolbar-title shrink class="column text-left">
-            <span class="text-weight-bold">RAPO</span>
-            <span class="text-caption text-weight-light"> Revenue Assurance Process Optimizer </span>
+            <span class="text-weight-bold">Rapo</span>
           </q-toolbar-title>
         </q-btn>
 

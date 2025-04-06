@@ -38,7 +38,7 @@
 import { useQuasar } from "quasar";
 
 export default {
-  props: ["control"],
+  props: ["control", "hook"],
   data() {
     return {
       visible: false,
@@ -86,6 +86,12 @@ export default {
         })
         .then(() => {
           this.$q.loadingBar.stop();
+          if (this.hook) {
+            this.hook();
+          }
+          else {
+            this.$router.push({ name: "results" });
+          }
         });
     },
   },

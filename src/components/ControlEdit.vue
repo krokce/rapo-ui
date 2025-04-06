@@ -42,7 +42,13 @@
         </div>
 
         <div class="row q-mx-xl q-mb-md q-gutter-md">
-          <q-input class="col" v-model="control.control_desc" label="Control description" outlined autogrow />
+          <q-input
+            class="col"
+            v-model="control.control_description"
+            label="Control description"
+            :rules="[(val) => !val || val.length <= 500 || 'Description should have maximum 500 characters']"
+            outlined
+            autogrow />
         </div>
 
         <div class="row q-mx-xl q-mb-lg q-gutter-md">
@@ -53,9 +59,10 @@
             map-options
             v-model="control.control_type"
             :options="[
-              { label: 'Analysis', value: 'ANL' },
-              { label: 'Reconciliation', value: 'REC' },
-              // { label: 'Report', value: 'REP' },
+              { label: 'REC - Reconciliation', value: 'REC' },
+              { label: 'ANL - Analysis', value: 'ANL' },
+              { label: 'REP - Report', value: 'REP' },
+              { label: 'CMP - Comparison', value: 'CMP' },
               // { label: 'Key Performance Indicator', value: 'KPI' },
             ]"
             label="Control type"
@@ -116,15 +123,15 @@
             map-options
             v-model="withDeleteionDrop"
             :options="[
-              { label: 'No', value: 'N' },
-              { label: 'Yes, with deletion', value: 'deletion' },
-              { label: 'Yes, with drop', value: 'drop' },
+              { label: 'Retention based', value: 'N' },
+              { label: 'On each run, delete', value: 'deletion' },
+              { label: 'On each run, recreate', value: 'drop' },
             ]"
             label="Remove past results"
             @update:model-value="deletionDropChanged" />
         </div>
 
-        <div class="row q-mx-xl q-mb-xs q-gutter-md" v-if="control.control_type === 'ANL'">
+        <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
           <q-select
             class="col"
             outlined
@@ -136,7 +143,6 @@
             label="Datasource"
             :options="datasourceListOptions"
             @filter="filterDatasourceList"
-            @update:model-value="datasourceChanged"
             :rules="[(val) => (val && val.length > 0) || 'You must select a datasource']">
             <template v-slot:prepend>
               <q-icon name="fas fa-table" @click.stop.prevent />
@@ -149,6 +155,7 @@
           </q-select>
 
           <q-select
+            v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
             class="col-2"
             outlined
             v-model="control.source_date_field"
@@ -160,9 +167,22 @@
               <q-icon name="far fa-calendar-alt" @click.stop.prevent />
             </template>
           </q-select>
+
+          <q-select
+            v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
+            class="col-2"
+            outlined
+            v-model="control.source_date_field"
+            label="Date column"
+            :options="datasourceDateColumns"
+            behavior="menu">
+            <template v-slot:prepend>
+              <q-icon name="far fa-calendar-alt" @click.stop.prevent />
+            </template>
+          </q-select>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="control.control_type === 'REC'">
+        <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
           <q-select
             class="col"
             outlined
@@ -174,7 +194,6 @@
             label="Datasource A"
             :options="datasourceListOptions"
             @filter="filterDatasourceList"
-            @update:model-value="datasourceAChanged"
             :rules="[(val) => (val && val.length > 0) || 'You must select a datasource']">
             <template v-slot:prepend>
               <q-icon name="fas fa-table" @click.stop.prevent />
@@ -208,7 +227,6 @@
             label="Datasource B"
             :options="datasourceListOptions"
             @filter="filterDatasourceList"
-            @update:model-value="datasourceBChanged"
             :rules="[(val) => (val && val.length > 0) || 'You must select a datasource']">
             <template v-slot:prepend>
               <q-icon name="fas fa-table" @click.stop.prevent />
@@ -235,7 +253,7 @@
 
         <div class="row q-mx-xl q-mb-xs q-gutter-md">
           <q-select
-            v-if="control.control_type === 'ANL'"
+            v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
             class="col"
             outlined
             clearable
@@ -244,17 +262,14 @@
             :options="datasourceColumns"
             use-chips
             stack-label
-            label="Select columns"
-            :rules="[(val) => (val && val.length > 0) || 'You must select at least one column']">
+            label="Select output columns (leave empty for all)">
             <template v-slot:prepend>
-              <q-icon name="fas fa-columns" @click.stop.prevent />
+              <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns()" />
             </template>
           </q-select>
-        </div>
 
-        <div class="row q-mx-xl q-mb-xs q-gutter-md">
           <q-select
-            v-if="control.control_type === 'REC'"
+            v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
             class="col"
             outlined
             clearable
@@ -263,15 +278,14 @@
             :options="datasourceAColumns"
             use-chips
             stack-label
-            label="Select columns A"
-            :rules="[(val) => (val && val.length > 0) || 'You must select at least one column']">
+            label="Select output columns A-side (leave empty for all)">
             <template v-slot:prepend>
-              <q-icon name="fas fa-columns" @click.stop.prevent />
+              <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('A')" />
             </template>
           </q-select>
 
           <q-select
-            v-if="control.control_type === 'REC'"
+            v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
             class="col"
             outlined
             clearable
@@ -280,58 +294,58 @@
             :options="datasourceBColumns"
             use-chips
             stack-label
-            label="Select columns B">
+            label="Select output columns B-side (leave empty for all)">
             <template v-slot:prepend>
-              <q-icon name="fas fa-columns" @click.stop.prevent />
+              <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('B')" />
             </template>
           </q-select>
         </div>
 
         <div class="row q-mx-xl q-mb-md q-gutter-md">
           <div class="col" v-if="control.control_type === 'REC'">
-            <sql-box label="Matching criteria (Rule config)" v-model="control.rule_config"> </sql-box>
+            <code-box label="Matching criteria (Rule config)" v-model="control.rule_config"> </code-box>
           </div>
           <div class="col">
-            <sql-box label="Missmatch criteria (Error config)" v-model="control.error_config"> </sql-box>
+            <code-box label="Missmatch criteria (Error definition)" v-model="control.error_definition"> </code-box>
           </div>
         </div>
 
         <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="inputs.includes('filter')">
-          <div class="col" v-if="control.control_type === 'ANL'">
-            <sql-box label="Filter" v-model="control.source_filter"> </sql-box>
+          <div class="col" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
+            <code-box label="Filter" v-model="control.source_filter"> </code-box>
           </div>
-          <div class="col" v-if="control.control_type === 'REC'">
-            <sql-box label="Filter (Datasource A)" v-model="control.source_filter_a"> </sql-box>
+          <div class="col" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
+            <code-box label="Filter (Datasource A)" v-model="control.source_filter_a"> </code-box>
           </div>
-          <div class="col" v-if="control.control_type === 'REC'">
-            <sql-box label="Filter (Datasource B)" v-model="control.source_filter_b"> </sql-box>
+          <div class="col" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
+            <code-box label="Filter (Datasource B)" v-model="control.source_filter_b"> </code-box>
           </div>
         </div>
 
         <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="inputs.includes('case_config')">
           <div class="col">
-            <sql-box label="Case config" v-model="control.case_config"> </sql-box>
+            <code-box label="Case config" v-model="control.case_config"> </code-box>
           </div>
           <div class="col">
-            <sql-box label="Result config" v-model="control.result_config"> </sql-box>
+            <code-box label="Result config" v-model="control.result_config"> </code-box>
           </div>
         </div>
 
         <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="inputs.includes('preparation_sql')">
           <div class="col">
-            <sql-box label="Preparation SQL" v-model="control.preparation_sql"> </sql-box>
+            <code-box label="Preparation SQL" v-model="control.preparation_sql"> </code-box>
           </div>
         </div>
 
         <div class="row q-mx-xl q-mb-lg q-gutter-md" v-if="inputs.includes('prerequisite_sql')">
           <div class="col">
-            <sql-box label="Prerequisite SQL" v-model="control.prerequisite_sql"> </sql-box>
+            <code-box label="Prerequisite SQL" v-model="control.prerequisite_sql"> </code-box>
           </div>
         </div>
 
         <div class="row q-mx-xl q-mb-lg q-gutter-md" v-if="inputs.includes('completion_sql')">
           <div class="col">
-            <sql-box label="Completion SQL" v-model="control.completion_sql"> </sql-box>
+            <code-box label="Completion SQL" v-model="control.completion_sql"> </code-box>
           </div>
         </div>
 
@@ -344,11 +358,11 @@
         </div>
 
         <div class="row q-mx-xl q-mb-md q-gutter-md">
-          <schedule-edit-box class="col" v-model="control.schedule"></schedule-edit-box>
+          <schedule-edit-box class="col" v-model="control.schedule_config"></schedule-edit-box>
 
           <q-input
             class="col-auto"
-            v-model.number="control.days_back"
+            v-model.number="control.period_back"
             type="number"
             outlined
             label="Run days back"
@@ -382,12 +396,12 @@
 <script>
 import { useQuasar } from "quasar";
 import { mapGetters } from "vuex";
-import SqlBox from "./SqlBox.vue";
+import CodeBox from "./CodeBox.vue";
 import ScheduleEditBox from "./ScheduleEditBox.vue";
 
 export default {
   components: {
-    SqlBox,
+    CodeBox,
     ScheduleEditBox,
   },
   props: {
@@ -490,6 +504,15 @@ export default {
         return data;
       }
     },
+    populateColumns(side) {
+      if (side === "A") {
+        this.control.output_table_a_columns = this.datasourceAColumns;
+      } else if (side === "B") {
+        this.control.output_table_b_columns = this.datasourceBColumns;
+      } else {
+        this.control.output_table_columns = this.datasourceColumns;
+      }
+    },
     controlTypeChanged() {
       this.control.source_name = "";
       this.control.source_name_a = "";
@@ -503,45 +526,6 @@ export default {
       this.control.output_table_columns = [];
       this.control.output_table_a_columns = [];
       this.control.output_table_b_columns = [];
-    },
-    datasourceChanged(newDatasource) {
-      this.control.source_filter = "";
-
-      this.getDatasourceColumns(newDatasource).then((data) => {
-        this.datasourceColumns = data;
-        this.control.output_table_columns = data;
-      });
-
-      this.getDatasourceDateColumns(newDatasource).then((data) => {
-        this.datasourceDateColumns = data;
-        this.control.source_date_field = data[0];
-      });
-    },
-    datasourceAChanged(newDatasource) {
-      this.control.source_filter_a = "";
-
-      this.getDatasourceColumns(newDatasource).then((data) => {
-        this.datasourceAColumns = data;
-        this.control.output_table_a_columns = data;
-      });
-
-      this.getDatasourceDateColumns(newDatasource).then((data) => {
-        this.datasourceADateColumns = data;
-        this.control.source_date_field_a = data[0];
-      });
-    },
-    datasourceBChanged(newDatasource) {
-      this.control.source_filter_b = "";
-
-      this.getDatasourceColumns(newDatasource).then((data) => {
-        this.datasourceBColumns = data;
-        this.control.output_table_b_columns = data;
-      });
-
-      this.getDatasourceDateColumns(newDatasource).then((data) => {
-        this.datasourceBDateColumns = data;
-        this.control.source_date_field_b = data[0];
-      });
     },
     async getControlVersions(controlId) {
       const response = await fetch("/api/get-control-versions?control_id=" + controlId, {
@@ -565,7 +549,7 @@ export default {
       this.control = this.controlVersion;
 
       try {
-        if (this.control.control_type === "ANL") {
+        if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
           this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
           this.getDatasourceDateColumns(this.control.source_name).then((data) => (this.datasourceDateColumns = data));
@@ -629,22 +613,33 @@ export default {
       this.control.case_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.case_config);
 
       // Stringify the JSON obejcts holding the columns values
-      if (this.control.output_table_columns && this.control.output_table_columns.length) {
-        this.control.output_table = JSON.stringify({
-          columns: this.control.output_table_columns,
-        });
+      if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
+        if (!this.control.output_table_columns) {
+          this.control.output_table = null;
+        } else {
+          this.control.output_table = JSON.stringify({
+            columns: this.control.output_table_columns,
+          });
+        }
       } else {
-        this.control.output_table_a = JSON.stringify({
-          columns: this.control.output_table_a_columns,
-        });
-        this.control.output_table_b = JSON.stringify({
-          columns: this.control.output_table_b_columns,
-        });
+        if (!this.control.output_table_a_columns) {
+          this.control.output_table_a = null;
+        } else {
+          this.control.output_table_a = JSON.stringify({
+            columns: this.control.output_table_a_columns,
+          });
+        }
+
+        if (!this.control.output_table_b_columns) {
+          this.control.output_table_b = null;
+        } else {
+          this.control.output_table_b = JSON.stringify({
+            columns: this.control.output_table_b_columns,
+          });
+        }
       }
 
       if (this.control.control_type === "REC") {
-        // Reconciliation must be of subtype MA
-        this.control.control_subtype = "MA";
 
         // Combine OUTPUT from the A and B fields
         this.control.output_table = [];
@@ -706,6 +701,65 @@ export default {
     },
   },
   watch: {
+    "control.source_name": function (newDatasource, oldDatasource) {
+      console.log("Datasource changed from", oldDatasource, "to", newDatasource);
+
+      // this.control.source_filter = "";
+
+      this.getDatasourceColumns(newDatasource).then((data) => {
+        this.datasourceColumns = data;
+        // this.control.output_table_columns = data;
+        if (oldDatasource && oldDatasource !== newDatasource) {
+          this.control.output_table_columns = null;
+        }
+      });
+
+      this.getDatasourceDateColumns(newDatasource).then((data) => {
+        this.datasourceDateColumns = data;
+        this.datasourceDateColumns.push(null);
+
+        if (oldDatasource && oldDatasource !== newDatasource) {
+          this.control.source_date_field = data[0];
+          // this.control.source_date_field = null;
+        }
+      });
+    },
+    "control.source_name_a": function (newDatasource, oldDatasource) {
+      console.log("Datasource changed from", oldDatasource, "to", newDatasource);
+      // Call the datasourceChanged method with the new value
+
+      // this.control.source_filter_a = "";
+      
+      this.getDatasourceColumns(newDatasource).then((data) => {
+        this.datasourceAColumns = data;
+        if (oldDatasource && oldDatasource !== newDatasource) {
+          this.control.source_filter_a = "-- " + JSON.stringify(data) + "\n";
+          this.control.output_table_a_columns = null;
+        }
+      });
+
+      this.getDatasourceDateColumns(newDatasource).then((data) => {
+        this.datasourceADateColumns = data;
+        this.control.source_date_field_a = data[0];
+      });
+    },
+    "control.source_name_b": function (newDatasource, oldDatasource) {
+      console.log("Datasource changed from", oldDatasource, "to", newDatasource);
+
+      // this.control.source_filter_b = "";
+
+      this.getDatasourceColumns(newDatasource).then((data) => {
+        this.datasourceBColumns = data;
+        if (oldDatasource && oldDatasource !== newDatasource) {
+          this.control.output_table_b_columns = null;
+        }
+      });
+
+      this.getDatasourceDateColumns(newDatasource).then((data) => {
+        this.datasourceBDateColumns = data;
+        this.control.source_date_field_b = data[0];
+      });
+    },
     inputs() {
       if (!this.inputs.includes("filter")) {
         this.control.source_filter = "";
@@ -747,15 +801,22 @@ export default {
       }
 
       try {
-        if (this.control.control_type === "ANL") {
-          this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
+        if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
+          if (this.control["output_table"]) {
+            this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
+          }
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
           this.getDatasourceDateColumns(this.control.source_name).then((data) => (this.datasourceDateColumns = data));
-        } else {
-          this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
+        } else if (this.control.control_type === "REC" || this.control.control_type === "CMP") {
+          if (this.control["output_table_a"]) {
+            this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
+          }
           this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
           this.getDatasourceDateColumns(this.control.source_name_a).then((data) => (this.datasourceADateColumns = data));
-          this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
+
+          if (this.control["output_table_b"]) {
+            this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
+          }
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
           this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBDateColumns = data));
         }
@@ -794,7 +855,7 @@ export default {
         with_drop: "N",
         days_back: 1,
         days_retention: 90,
-        schedule: "",
+        schedule_config: "",
       };
     }
 
