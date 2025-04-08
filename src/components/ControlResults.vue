@@ -6,6 +6,7 @@
       <q-markup-table dense>
         <thead>
           <tr class="bg-blue-grey-2">
+            <th class="text-left">Type</th>
             <th class="text-left">Run timestamp</th>
             <th class="text-center">Run duration</th>
             <th class="text-left">PID</th>
@@ -25,6 +26,20 @@
         </thead>
         <tbody>
           <tr v-for="(control, index) in filteredControlResults" :key="control.process_id">
+            <td class="text-center" :class="{ 'new-day-separator': newDaySeparator(index) }">
+              <q-chip
+                size="sm"
+                text-color="white"
+                :class="{
+                  'bg-pink-8': control.control_type === 'ANL',
+                  'bg-teal-8': control.control_type === 'REC',
+                  'bg-lime-8': control.control_type === 'CMP',
+                  'bg-indigo-6': control.control_type === 'REP',
+                }"
+                class="text-weight-bold">
+                {{ control.control_type }}
+              </q-chip>
+            </td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <strong>{{ toDateTimeString(control.start_date) }}</strong>
             </td>
@@ -50,7 +65,15 @@
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_from) }}</td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_to) }}</td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
-              {{ control.fetched_number_a.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+              <span
+                v-if="control.fetched_number_a > 0 && control.control_type === 'REP'"
+                class="cursor-pointer text-red"
+                @click="copyToClipboard(control, 'A')">
+                {{ Number(control.fetched_number_a).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+              </span>
+              <span v-else>
+                {{ Number(control.fetched_number_a).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+              </span>
             </td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
               {{ Number(control.fetched_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
@@ -75,17 +98,13 @@
               <span v-if="control.error_level_a > 0" class="cursor-pointer text-red" @click="copyToClipboard(control, 'A')">
                 {{ Number(control.error_level_a).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
               </span>
-              <span v-else>
-                {{ Number(control.error_level_a).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
-              </span>              
+              <span v-else> {{ Number(control.error_level_a).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
             </td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <span v-if="control.error_level_b > 0" class="cursor-pointer text-red" @click="copyToClipboard(control, 'B')">
                 {{ Number(control.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
               </span>
-              <span v-else>
-                {{ Number(control.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
-              </span>              
+              <span v-else> {{ Number(control.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
             </td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.prerequisite_value }}</td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">

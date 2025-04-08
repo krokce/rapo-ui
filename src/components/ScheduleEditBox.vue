@@ -269,12 +269,12 @@ export default {
     scheduleTypeChanged() {
       this.scheduleObject.mday = null;
       this.scheduleObject.wday = null;
-      if (this.scheduleType === "X") {
-        this.scheduleObject.hour = "8";
-        this.scheduleObject.min = "15";
-        this.scheduleObject.sec = "0";
-        this.scheduleTimepicker = "08:15:00";
-      }
+      // if (this.scheduleType === "X") {
+      //   this.scheduleObject.hour = "8";
+      //   this.scheduleObject.min = "15";
+      //   this.scheduleObject.sec = "0";
+      //   this.scheduleTimepicker = "08:15:00";
+      // }
     },
     scheduleDateTimeChanged() {
       const scheduleDateTimeParts = this.scheduleTimepicker.split(":");
@@ -294,33 +294,35 @@ export default {
       if (scheduleString) {
         ret = JSON.parse(scheduleString);
         // Determine schedule type
-        if (
-          String(scheduleString).indexOf("/") > -1 ||
-          String(scheduleString).indexOf("-") > -1 ||
-          (String(ret.mday).indexOf(",") > -1 && String(ret.wday).indexOf(",") > -1) ||
-          (String(ret.hour) + String(ret.min) + String(ret.sec)).indexOf(",") > -1
-        ) {
-          this.scheduleType = "X";
-        } else if (ret.mday) {
-          this.scheduleType = "M";
-        } else if (ret.wday) {
-          this.scheduleType = "W";
-        } else {
-          this.scheduleType = "D";
-        }
-
-        // Convert components to arrays in case of simple scheduler
-        if (this.scheduleType !== "X") {
-          if (ret.mday) {
-            ret.mday = String(ret.mday)
-              .split(",")
-              .map((i) => Number(i));
+        if (!this.scheduleType) {
+          if (
+            String(scheduleString).indexOf("/") > -1 ||
+            String(scheduleString).indexOf("-") > -1 ||
+            (String(ret.mday).indexOf(",") > -1 && String(ret.wday).indexOf(",") > -1) ||
+            (String(ret.hour) + String(ret.min) + String(ret.sec)).indexOf(",") > -1
+          ) {
+            this.scheduleType = "X";
+          } else if (ret.mday) {
+            this.scheduleType = "M";
+          } else if (ret.wday) {
+            this.scheduleType = "W";
+          } else {
+            this.scheduleType = "D";
           }
 
-          if (ret.wday) {
-            ret.wday = String(ret.wday)
-              .split(",")
-              .map((i) => Number(i));
+          // Convert components to arrays in case of simple scheduler
+          if (this.scheduleType !== "X") {
+            if (ret.mday) {
+              ret.mday = String(ret.mday)
+                .split(",")
+                .map((i) => Number(i));
+            }
+
+            if (ret.wday) {
+              ret.wday = String(ret.wday)
+                .split(",")
+                .map((i) => Number(i));
+            }
           }
         }
       }

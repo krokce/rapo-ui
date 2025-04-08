@@ -12,7 +12,6 @@
             <th class="text-left">Name</th>
             <th class="text-left">Schedule</th>
             <th class="text-left">Description</th>
-            <th class="text-left">Atributes</th>
             <th class="text-left"></th>
           </tr>
         </thead>
@@ -37,12 +36,28 @@
                 <div class="text-weight-bold text-grey-9 text-subtitle1">
                   {{ control.control_name }}
                 </div>
-                <small class="text-grey-7"> v.{{ toDateTimeString(control.updated_date) }} </small>
+                <small class="text-grey-7">
+                  <router-link
+                    :to="{
+                      name: 'edit-control',
+                      params: { controlId: control.control_id },
+                    }">
+                    v.{{ toDateTimeString(control.updated_date) }}
+                  </router-link>
+                </small>
               </div>
             </td>
             <td style="width: 100px">
-              <div class="row justify-start self-center">
+              <div class="row justify-start items-center">
                 <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>
+              </div>
+            </td>
+            <td class="text-left">
+              <div style="white-space: normal; word-wrap: break-word">
+                {{ control.control_description }}
+              </div>
+
+              <div class="row justify-start items-center">
                 <q-chip
                   clickable
                   v-if="control.case_config"
@@ -53,16 +68,6 @@
                   @click="$q.notify(control.case_config)">
                   Case config
                 </q-chip>
-                <q-chip size="sm" v-if="control.status !== 'Y'" text-color="white" class="bg-red-4"> Scheduler inactive </q-chip>
-              </div>
-            </td>
-            <td class="text-left">
-              <div style="white-space: normal; word-wrap: break-word">
-                {{ control.control_description }}
-              </div>
-            </td>
-            <td style="width: 400px">
-              <div class="row justify-start self-center">
                 <q-chip
                   clickable
                   v-if="control.prerequisite_sql"
@@ -91,6 +96,7 @@
                 <q-chip clickable v-if="control.need_postrun_hook != 'Y'" size="sm" color="red-4" text-color="white" icon="fas fa-bolt">
                   Post HOOK inactive</q-chip
                 >
+                <q-chip clickable v-if="control.status !== 'Y'" size="sm" color="red-4" text-color="white" icon="fas fa-clock"> Scheduler inactive </q-chip>
               </div>
             </td>
 
