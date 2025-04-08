@@ -68,8 +68,7 @@ export default {
             this.$q.notify({ type: "negative", message: "Control " + this.control.control_name + " failed" });
           }
         })
-        .then((data) => {
-          console.log(data);
+        .then(() => {
           //this.datasourceList = data;
           this.$q.loadingBar.stop();
         });

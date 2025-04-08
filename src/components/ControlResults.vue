@@ -3,7 +3,7 @@
     <h1>Last control result<span v-if="filteredControlResultsLen != 1">s</span></h1>
 
     <div class="q-pa-md">
-      <q-markup-table dense="true">
+      <q-markup-table dense>
         <thead>
           <tr class="bg-blue-grey-2">
             <th class="text-left">Run timestamp</th>
@@ -36,7 +36,15 @@
                   name: 'edit-control',
                   params: { controlId: control.control_id },
                 }">
-                {{ control.control_name }}
+                <span
+                  :class="{
+                    'text-pink-8': control.control_type === 'ANL',
+                    'text-teal-8': control.control_type === 'REC',
+                    'text-lime-8': control.control_type === 'CMP',
+                    'text-indigo-6': control.control_type === 'REP',
+                  }">
+                  {{ control.control_name }}
+                </span>
               </router-link>
             </td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_from) }}</td>
@@ -48,7 +56,7 @@
               {{ Number(control.fetched_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
             </td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
-              <span v-if="control.error_number_a > 0" class="cursor-pointer text-weight-bold text-teal" @click="copyToClipboard(control, 'B')">
+              <span v-if="control.error_number_a > 0" class="cursor-pointer text-red" @click="copyToClipboard(control, 'A')">
                 {{ Number(control.error_number_a).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
               </span>
               <span v-else>
@@ -56,18 +64,28 @@
               </span>
             </td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
-              <span v-if="control.error_number_b > 0" class="cursor-pointer text-weight-bold text-teal" @click="copyToClipboard(control, 'B')">
+              <span v-if="control.error_number_b > 0" class="cursor-pointer text-red" @click="copyToClipboard(control, 'B')">
                 {{ Number(control.error_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
               </span>
               <span v-else>
                 {{ Number(control.error_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
               </span>
             </td>
-            <td class="text-right text-red" :class="{ 'new-day-separator': newDaySeparator(index) }">
-              {{ Number(control.error_level_a).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+              <span v-if="control.error_level_a > 0" class="cursor-pointer text-red" @click="copyToClipboard(control, 'A')">
+                {{ Number(control.error_level_a).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+              </span>
+              <span v-else>
+                {{ Number(control.error_level_a).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+              </span>              
             </td>
-            <td class="text-right text-red" :class="{ 'new-day-separator': newDaySeparator(index) }">
-              {{ Number(control.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+              <span v-if="control.error_level_b > 0" class="cursor-pointer text-red" @click="copyToClipboard(control, 'B')">
+                {{ Number(control.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+              </span>
+              <span v-else>
+                {{ Number(control.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+              </span>              
             </td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.prerequisite_value }}</td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
@@ -82,7 +100,7 @@
               </q-chip>
             </td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
-              <q-btn color="grey-7" round flat icon="more_vert">
+              <q-btn size="sm" color="grey-7" round flat icon="fas fa-ellipsis-v">
                 <q-menu>
                   <q-list dense class="text-no-wrap">
                     <run-control-dialog :control="control" :hook="updateControlResults">
@@ -160,7 +178,7 @@ export default {
 
       const textarea = document.createElement("textarea");
       textarea.value = "select * from RAPO_RES" + table_suffix + "_" + control.control_name + " where RAPO_PROCESS_ID = " + control.process_id + ";";
-      textarea.style.position = "fixed"; 
+      textarea.style.position = "fixed";
       document.body.appendChild(textarea);
       textarea.focus();
       textarea.select();

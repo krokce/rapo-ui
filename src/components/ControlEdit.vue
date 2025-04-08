@@ -4,7 +4,7 @@
       <h1>{{ control.control_name ? control.control_name : "New control" }}</h1>
 
       <q-form @submit="save" @reset="cancel">
-        <div class="row q-mx-xl q-mb-xs q-gutter-md">
+        <div class="row q-mx-xl q-gutter-md">
           <q-input
             class="col"
             outlined
@@ -41,7 +41,7 @@
           </q-select>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md">
+        <div class="row q-mx-xl q-my-xs q-gutter-md">
           <q-input
             class="col"
             v-model="control.control_description"
@@ -51,7 +51,7 @@
             autogrow />
         </div>
 
-        <div class="row q-mx-xl q-mb-lg q-gutter-md">
+        <div class="row q-mx-xl q-my-xs q-gutter-md">
           <q-select
             class="col"
             outlined
@@ -123,15 +123,28 @@
             map-options
             v-model="withDeleteionDrop"
             :options="[
-              { label: 'Retention based', value: 'N' },
+              { label: 'After defined period', value: 'N' },
               { label: 'On each run, delete', value: 'deletion' },
-              { label: 'On each run, recreate', value: 'drop' },
+              { label: 'On each run, drop', value: 'drop' },
             ]"
             label="Remove past results"
             @update:model-value="deletionDropChanged" />
+
+          <q-input
+            class="col-auto"
+            v-model.number="control.days_retention"
+            v-if="withDeleteionDrop === 'N'"
+            type="number"
+            outlined
+            label="Results retention (days)"
+            :rules="[(val) => ((val || val === 0) && val >= 0) || 'Not a valid value']">
+            <template v-slot:prepend>
+              <q-icon name="fas fa-trash-alt" @click.stop.prevent />
+            </template>
+          </q-input>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
+        <div class="row q-mx-xl q-my-xs q-gutter-md" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
           <q-select
             class="col"
             outlined
@@ -182,7 +195,7 @@
           </q-select>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
+        <div class="row q-mx-xl q-my-xs q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
           <q-select
             class="col"
             outlined
@@ -251,7 +264,7 @@
           </q-select>
         </div>
 
-        <div class="row q-mx-xl q-mb-xs q-gutter-md">
+        <div class="row q-mx-xl q-my-xs q-gutter-md">
           <q-select
             v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
             class="col"
@@ -262,7 +275,7 @@
             :options="datasourceColumns"
             use-chips
             stack-label
-            label="Select output columns (leave empty for all)">
+            label="Select output (leave empty for all columns)">
             <template v-slot:prepend>
               <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns()" />
             </template>
@@ -278,7 +291,7 @@
             :options="datasourceAColumns"
             use-chips
             stack-label
-            label="Select output columns A-side (leave empty for all)">
+            label="Select output A-side (leave empty for all columns)">
             <template v-slot:prepend>
               <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('A')" />
             </template>
@@ -294,23 +307,23 @@
             :options="datasourceBColumns"
             use-chips
             stack-label
-            label="Select output columns B-side (leave empty for all)">
+            label="Select output B-side (leave empty for all columns)">
             <template v-slot:prepend>
               <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('B')" />
             </template>
           </q-select>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md">
-          <div class="col" v-if="control.control_type === 'REC'">
+        <div class="row q-mx-xl q-my-xs q-gutter-md">
+          <div class="col" v-if="control.control_type !== 'REP'">
             <code-box label="Matching criteria (Rule config)" v-model="control.rule_config"> </code-box>
           </div>
-          <div class="col">
+          <div class="col" v-if="control.control_type !== 'REC' && control.control_type !== 'REP'">
             <code-box label="Missmatch criteria (Error definition)" v-model="control.error_definition"> </code-box>
           </div>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="inputs.includes('filter')">
+        <div class="row q-mx-xl q-my-xs q-gutter-md" v-if="inputs.includes('filter')">
           <div class="col" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
             <code-box label="Filter" v-model="control.source_filter"> </code-box>
           </div>
@@ -322,7 +335,7 @@
           </div>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="inputs.includes('case_config')">
+        <div class="row q-mx-xl q-my-xs q-gutter-md" v-if="inputs.includes('case_config')">
           <div class="col">
             <code-box label="Case config" v-model="control.case_config"> </code-box>
           </div>
@@ -331,25 +344,25 @@
           </div>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md" v-if="inputs.includes('preparation_sql')">
+        <div class="row q-mx-xl q-my-xs q-gutter-md" v-if="inputs.includes('preparation_sql')">
           <div class="col">
             <code-box label="Preparation SQL" v-model="control.preparation_sql"> </code-box>
           </div>
         </div>
 
-        <div class="row q-mx-xl q-mb-lg q-gutter-md" v-if="inputs.includes('prerequisite_sql')">
+        <div class="row q-mx-xl q-my-xs q-gutter-md" v-if="inputs.includes('prerequisite_sql')">
           <div class="col">
             <code-box label="Prerequisite SQL" v-model="control.prerequisite_sql"> </code-box>
           </div>
         </div>
 
-        <div class="row q-mx-xl q-mb-lg q-gutter-md" v-if="inputs.includes('completion_sql')">
+        <div class="row q-mx-xl q-my-xs q-gutter-md" v-if="inputs.includes('completion_sql')">
           <div class="col">
             <code-box label="Completion SQL" v-model="control.completion_sql"> </code-box>
           </div>
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md">
+        <div class="row q-mx-xl q-my-xs q-gutter-md">
           <q-toggle color="blue" label="Datasource filter" v-model="inputs" val="filter" />
           <q-toggle color="blue" label="Case config" v-model="inputs" val="case_config" />
           <q-toggle color="blue" label="Preparation SQL" v-model="inputs" val="preparation_sql" />
@@ -357,7 +370,7 @@
           <q-toggle color="blue" label="Completion SQL" v-model="inputs" val="completion_sql" />
         </div>
 
-        <div class="row q-mx-xl q-mb-md q-gutter-md">
+        <div class="row q-mx-xl q-my-xs q-gutter-md">
           <schedule-edit-box class="col" v-model="control.schedule_config"></schedule-edit-box>
 
           <q-input
@@ -369,18 +382,6 @@
             :rules="[(val) => ((val || val === 0 || val < 5) && val >= 0) || 'Not a valid value']">
             <template v-slot:prepend>
               <q-icon name="fas fa-history" @click.stop.prevent />
-            </template>
-          </q-input>
-
-          <q-input
-            class="col-auto"
-            v-model.number="control.days_retention"
-            type="number"
-            outlined
-            label="Results retention (days)"
-            :rules="[(val) => ((val || val === 0) && val >= 0) || 'Not a valid value']">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-calendar-alt" @click.stop.prevent />
             </template>
           </q-input>
         </div>
@@ -514,15 +515,19 @@ export default {
       }
     },
     controlTypeChanged() {
-      this.control.source_name = "";
-      this.control.source_name_a = "";
-      this.control.source_name_b = "";
-      this.control.source_filter = "";
-      this.control.source_filter_a = "";
-      this.control.source_filter_b = "";
-      this.control.source_date_field = "";
-      this.control.source_date_field_a = "";
-      this.control.source_date_field_b = "";
+      this.control.source_name = null;
+      this.control.source_name_a = null;
+      this.control.source_name_b = null;
+      this.control.source_date_field = null;
+      this.control.source_date_field_a = null;
+      this.control.source_date_field_b = null;
+      this.control.rule_config = null;
+      this.control.error_definition = null;
+      this.control.source_filter = null;
+      this.control.source_filter_a = null;
+      this.control.source_filter_b = null;
+      this.control.case_config = null;
+      this.control.result_config = null;
       this.control.output_table_columns = [];
       this.control.output_table_a_columns = [];
       this.control.output_table_b_columns = [];
@@ -640,7 +645,6 @@ export default {
       }
 
       if (this.control.control_type === "REC") {
-
         // Combine OUTPUT from the A and B fields
         this.control.output_table = [];
         if (this.control.output_table_a_columns) {
@@ -729,7 +733,7 @@ export default {
       // Call the datasourceChanged method with the new value
 
       // this.control.source_filter_a = "";
-      
+
       this.getDatasourceColumns(newDatasource).then((data) => {
         this.datasourceAColumns = data;
         if (oldDatasource && oldDatasource !== newDatasource) {
@@ -825,19 +829,19 @@ export default {
       }
 
       // Update UI switch buttons "inputs" based on the present fields
-      if (this.control.source_filter || this.control.source_filter_a || this.control.source_filter_b) {
+      if (this.control.source_filter?.trim() || this.control.source_filter_a?.trim() || this.control.source_filter_b?.trim()) {
         this.inputs.push("filter");
       }
-      if (this.control.case_config || this.control.result_config) {
+      if (this.control.case_config?.trim() || this.control.result_config?.trim()) {
         this.inputs.push("case_config");
       }
-      if (this.control.preparation_sql) {
+      if (this.control.preparation_sql?.trim()) {
         this.inputs.push("preparation_sql");
       }
-      if (this.control.prerequisite_sql) {
+      if (this.control.prerequisite_sql?.trim()) {
         this.inputs.push("prerequisite_sql");
       }
-      if (this.control.completion_sql) {
+      if (this.control.completion_sql?.trim()) {
         this.inputs.push("completion_sql");
       }
 

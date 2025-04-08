@@ -20,7 +20,6 @@
             </q-list>
           </q-menu>
         </q-btn>
-        <q-btn v-if="1 == 2" class="push-right col-auto" flat size="xs" icon="fas fa-info-circle" @click="printValues" />
       </div>
     </span>
     <codemirror ref="editor" v-model="code" :indent-with-tab="true" :smart-indent="true" :tab-size="4" :extensions="extensions" @ready="handleReady" />
@@ -151,12 +150,6 @@ export default {
   methods: {
     handleReady(payload) {
       this.view = payload.view;
-    },
-    printValues() {
-      const state = this.view.state;
-      const ranges = state.selection.ranges;
-      console.log("ranges from", ranges[0].from);
-      console.log("ranges to", ranges[0].to);
     },
     setCode(code) {
       this.code = code;

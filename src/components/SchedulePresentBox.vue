@@ -1,12 +1,12 @@
 <template>
   <q-chip
-    square
+    size="sm"
     class="row items-center"
     :class="{
-      'bg-blue-grey-4': schedule_type === 'D',
+      'bg-blue-grey-7': schedule_type === 'D',
       'bg-blue-grey-5': schedule_type === 'W',
-      'bg-blue-grey-6': schedule_type === 'M',
-      'bg-blue-grey-7': schedule_type === 'X',
+      'bg-blue-grey-3': schedule_type === 'M',
+      'bg-blue-grey-2': schedule_type === 'X',
     }"
     text-color="white"
     icon="alarm">
