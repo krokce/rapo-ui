@@ -119,13 +119,7 @@
         </div>
 
         <div class="row q-my-xs q-gutter-md">
-          <q-input
-            class="col"
-            v-model.number="control.parallelism"
-            type="number"
-            outlined
-            label="Parallelism"
-            :rules="[(val) => ((val || val === 0) && val >= 0) || 'Not a valid value']">
+          <q-input class="col" v-model.number="control.parallelism" type="number" outlined label="Parallelism">
             <template v-slot:prepend>
               <q-icon name="fas fa-microchip" @click.stop.prevent />
             </template>
@@ -201,20 +195,6 @@
           </q-select>
 
           <q-select
-            v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
-            class="col-2"
-            outlined
-            v-model="control.source_date_field"
-            label="Date column"
-            :options="datasourceDateColumns"
-            behavior="menu"
-            :rules="[(val) => (val && val.length > 0) || 'No date column to select!']">
-            <template v-slot:prepend>
-              <q-icon name="far fa-calendar-alt" @click.stop.prevent />
-            </template>
-          </q-select>
-
-          <q-select
             v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
             class="col-2"
             outlined
@@ -252,19 +232,6 @@
           </q-select>
 
           <q-select
-            class="col-2"
-            outlined
-            v-model="control.source_date_field_a"
-            label="Date column A"
-            :options="datasourceADateColumns"
-            behavior="menu"
-            :rules="[(val) => (val && val.length > 0) || 'No date column to select!']">
-            <template v-slot:prepend>
-              <q-icon name="far fa-calendar-alt" @click.stop.prevent />
-            </template>
-          </q-select>
-
-          <q-select
             class="col"
             outlined
             v-model="control.source_name_b"
@@ -285,6 +252,23 @@
               </q-item>
             </template>
           </q-select>
+        </div>
+
+        <div v-if="control.control_type === 'REC' || control.control_type === 'CMP'" class="row q-gutter-md">
+          <q-select
+            class="col-2"
+            outlined
+            v-model="control.source_date_field_a"
+            label="Date column A"
+            :options="datasourceADateColumns"
+            behavior="menu"
+            :rules="[(val) => (val && val.length > 0) || 'No date column to select!']">
+            <template v-slot:prepend>
+              <q-icon name="far fa-calendar-alt" @click.stop.prevent />
+            </template>
+          </q-select>
+
+          <q-icon class="q-py-md" name="fas fa-equals" size="20px" color="blue-grey-3" />
 
           <q-select
             class="col-2"
@@ -298,6 +282,32 @@
               <q-icon name="far fa-calendar-alt" @click.stop.prevent />
             </template>
           </q-select>
+
+          <q-icon class="q-py-md" name="fas fa-circle" size="20px" color="blue-grey-3" />
+
+          <q-input outlined class="col" v-model.number="ruleConfigObject.time_shift_from" type="number" label="Time shift from">
+            <template v-slot:prepend>
+              <q-icon name="far fa-clock" @click.stop.prevent />
+            </template>
+          </q-input>
+
+          <q-input outlined class="col" v-model.number="ruleConfigObject.time_shift_to" type="number" label="Time shift to">
+            <template v-slot:prepend>
+              <q-icon name="far fa-clock" @click.stop.prevent />
+            </template>
+          </q-input>
+
+          <q-input outlined class="col" v-model.number="ruleConfigObject.time_tolerance_from" type="number" label="Time tolerance from">
+            <template v-slot:prepend>
+              <q-icon name="far fa-clock" @click.stop.prevent />
+            </template>
+          </q-input>
+
+          <q-input outlined class="col" v-model.number="ruleConfigObject.time_tolerance_to" type="number" label="Time tolerance to">
+            <template v-slot:prepend>
+              <q-icon name="far fa-clock" @click.stop.prevent />
+            </template>
+          </q-input>
         </div>
 
         <div class="row q-my-xs q-gutter-md">
@@ -351,7 +361,7 @@
         </div>
 
         <div class="row q-my-xs q-gutter-md">
-          <div class="col" v-if="control.control_type !== 'REP' && control.control_type !== 'ANL'">
+          <div class="col" v-if="control.control_type == 'CMP'">
             <code-box label="Matching criteria (Rule config)" v-model="control.rule_config"> </code-box>
           </div>
           <div class="col" v-if="control.control_type !== 'REC' && control.control_type !== 'REP'">
@@ -369,6 +379,15 @@
           <div class="col" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
             <code-box label="Filter (Datasource B)" v-model="control.source_filter_b"> </code-box>
           </div>
+        </div>
+
+        <div class="row q-my-xs q-gutter-md" v-if="control.control_type === 'REC'">
+          <reconciliation-config-box
+            class="col"
+            v-model="this.ruleConfigObject"
+            :datasource-a-columns="this.datasourceAColumns"
+            :datasource-b-columns="this.datasourceBColumns">
+          </reconciliation-config-box>
         </div>
 
         <div class="row q-my-xs q-gutter-md" v-if="inputs.includes('case_config') && control.control_type !== 'REP' && control.control_type !== 'REC'">
@@ -400,7 +419,12 @@
 
         <div class="row q-my-xs q-gutter-md">
           <q-toggle color="blue" label="Datasource filter" v-model="inputs" val="filter" />
-          <q-toggle v-if="control.control_type !== 'REP' && control.control_type !== 'REC'" color="blue" label="Case config" v-model="inputs" val="case_config" />
+          <q-toggle
+            v-if="control.control_type !== 'REP' && control.control_type !== 'REC'"
+            color="blue"
+            label="Case config"
+            v-model="inputs"
+            val="case_config" />
           <q-toggle color="blue" label="Preparation SQL" v-model="inputs" val="preparation_sql" />
           <q-toggle color="blue" label="Prerequisite SQL" v-model="inputs" val="prerequisite_sql" />
           <q-toggle color="blue" label="Completion SQL" v-model="inputs" val="completion_sql" />
@@ -460,11 +484,13 @@ import { useQuasar } from "quasar";
 import { mapGetters } from "vuex";
 import CodeBox from "./CodeBox.vue";
 import ScheduleEditBox from "./ScheduleEditBox.vue";
+import ReconciliationConfigBox from "./ReconciliationConfigBox.vue";
 
 export default {
   components: {
     CodeBox,
     ScheduleEditBox,
+    ReconciliationConfigBox,
   },
   props: {
     controlId: {
@@ -488,6 +514,19 @@ export default {
       datasourceListAOptions: null,
       datasourceListBOptions: null,
       withDeleteionDrop: "N",
+      ruleConfigObject: {
+        need_issues_a: true,
+        need_issues_b: true,
+        need_recons_a: false,
+        need_recons_b: false,
+        allow_duplicates: false,
+        time_shift_from: 0,
+        time_shift_to: 0,
+        time_tolerance_from: 0,
+        time_tolerance_to: 0,
+        correlation_config: [],
+        discrepancy_config: [],
+      },
       inputs: [],
       $q: useQuasar(),
     };
@@ -581,7 +620,9 @@ export default {
       this.control.source_name_b = null;
       this.control.source_date_field = null;
       this.control.source_date_field_a = null;
+      this.control.source_key_field_a = null;
       this.control.source_date_field_b = null;
+      this.control.source_key_field_b = null;
       this.control.rule_config = null;
       this.control.error_definition = null;
       this.control.source_filter = null;
@@ -590,6 +631,9 @@ export default {
       this.control.case_config = null;
       this.control.timeout = 3600;
       this.control.result_config = null;
+      this.control.output_table = null;
+      this.control.output_table_a = null;
+      this.control.output_table_b = null;
       this.control.output_table_columns = [];
       this.control.output_table_a_columns = [];
       this.control.output_table_b_columns = [];
@@ -675,9 +719,9 @@ export default {
       this.control.source_filter_a = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter_a);
       this.control.source_filter_b = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter_b);
 
-      this.control.rule_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.rule_config);
-      this.control.error_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.error_config);
-      this.control.case_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.case_config);
+      // this.control.rule_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.rule_config);
+      // this.control.error_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.error_config);
+      // this.control.case_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.case_config);
 
       // Stringify the JSON obejcts holding the columns values
       if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
@@ -704,9 +748,21 @@ export default {
             columns: this.control.output_table_b_columns,
           });
         }
+
+        this.control.rule_config = JSON.stringify(this.ruleConfigObject);
       }
 
+      // Set key columns to 'TAG' if they are not set
       if (this.control.control_type === "REC") {
+        if (!this.control.source_key_field_a) {
+          this.control.source_key_field_a = "TAG";
+        }
+        if (!this.control.source_key_field_b) {
+          this.control.source_key_field_b = "TAG";
+        }
+      }
+
+      if (this.control.control_type === "CMP") {
         // Combine OUTPUT from the A and B fields
         this.control.output_table = [];
         if (this.control.output_table_a_columns) {
@@ -826,6 +882,7 @@ export default {
         this.control.source_date_field_b = data[0];
       });
     },
+
     inputs() {
       if (!this.inputs.includes("filter")) {
         this.control.source_filter = "";
@@ -885,6 +942,10 @@ export default {
           }
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
           this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBDateColumns = data));
+
+          if (this.control.rule_config) {
+            this.ruleConfigObject = JSON.parse(this.control.rule_config);
+          }
         }
       } catch (err) {
         console.log(err);
@@ -924,7 +985,6 @@ export default {
         schedule_config: "",
         timeout: 3600,
         instance_limit: 1,
-        parallelism: 1,
         period_type: "D",
         period_back: 1,
         period_number: 1,
