@@ -1,478 +1,567 @@
 <template>
   <q-page>
     <div>
-      <h1>{{ control.control_name ? control.control_name : "New control" }}</h1>
+      <h2 class="row">
+        <q-chip
+          size="xl"
+          text-color="white"
+          :class="{
+            'bg-pink-8': control.control_type === 'ANL',
+            'bg-teal-8': control.control_type === 'REC',
+            'bg-lime-8': control.control_type === 'CMP',
+            'bg-indigo-6': control.control_type === 'REP',
+          }"
+          class="text-weight-bold">
+          {{ control.control_type }}
+        </q-chip>
+        &nbsp;
+        {{ control.control_name ? control.control_name : "New control" }}
+      </h2>
 
-      <q-form @submit="save" @reset="cancel">
-        <div class="row q-gutter-md">
-          <q-input
-            class="col"
-            outlined
-            v-model="control.control_name"
-            label="Control name"
-            :rules="[
-              (val) => (val && val.length >= 3) || 'Control name should have minimum 3 characters',
-              (val) => (val && val.length <= 45) || 'Control name should have maximum 45 characters',
-            ]"
-            @keyup="control && control.control_name && (control.control_name = control.control_name.toUpperCase())" />
+      {{ this.iterationConfigObject }}
 
-          <q-input class="col" outlined v-model="control.control_alias" label="Control alias" />
+      <q-card>
+        <q-tabs
+          v-model="tab"
+          class="text-white"
+          :class="{
+            'bg-pink-8': control.control_type === 'ANL',
+            'bg-teal-8': control.control_type === 'REC',
+            'bg-lime-8': control.control_type === 'CMP',
+            'bg-indigo-6': control.control_type === 'REP',
+          }"
+          active-color="light-blue-1"
+          indicator-color="light-blue-1"
+          align="justify"
+          inline-label
+          narrow-indicator
+          no-caps>
+          <q-tab name="main" label="Main" icon="fas fa-window-maximize" />
+          <q-tab name="data" label="Data" icon="fas fa-database" />
+          <q-tab name="sql" label="SQL" icon="fas fa-code" />
+          <q-tab v-if="control.control_type !== 'REP' && control.control_type !== 'REC'" name="case" label="Case config" icon="fas fa-tag" />
+          <q-tab name="scheduler" label="Scheduler" icon="fas fa-clock" />
+        </q-tabs>
 
-          <q-select
-            class="col-2"
-            outlined
-            v-model="controlVersion"
-            use-input
-            hide-selected
-            fill-input
-            input-debounce="0"
-            label="Version"
-            :options="controlVersions"
-            @filter="filterDatasourceList"
-            @update:model-value="controlVersionChanged">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-tag" size="sm" @click.stop.prevent />
-            </template>
-            <template v-slot:no-option>
-              <q-item>
-                <q-item-section class="text-grey"> No past versions </q-item-section>
-              </q-item>
-            </template>
-          </q-select>
-        </div>
+        <q-separator />
 
-        <div class="row q-my-xs q-gutter-md">
-          <q-input
-            class="col"
-            v-model="control.control_description"
-            label="Control description"
-            :rules="[(val) => !val || val.length <= 500 || 'Description should have maximum 500 characters']"
-            outlined
-            autogrow />
-        </div>
+        <q-form @submit="validateAndSave" @reset="cancel" ref="myForm">
+          <q-tab-panels v-model="tab" animated keep-alive>
+            <q-tab-panel name="main">
+              <div class="q-ma-lg q-gutter-y-md">
+                <div class="row q-gutter-md">
+                  <q-input
+                    class="col"
+                    outlined
+                    v-model="control.control_name"
+                    label="Control name"
+                    maxlength="45"
+                    @keyup="control && control.control_name && (control.control_name = control.control_name.toUpperCase())" />
 
-        <div class="row q-my-xs q-gutter-md">
-          <q-select
-            class="col"
-            outlined
-            emit-value
-            map-options
-            v-model="control.control_type"
-            :options="[
-              { label: 'REC - Reconciliation', value: 'REC' },
-              { label: 'ANL - Analysis', value: 'ANL' },
-              { label: 'REP - Report', value: 'REP' },
-              { label: 'CMP - Comparison', value: 'CMP' },
-              // { label: 'Key Performance Indicator', value: 'KPI' },
-            ]"
-            label="Control type"
-            @update:model-value="controlTypeChanged" />
+                  <q-input class="col" outlined v-model="control.control_alias" label="Control alias" />
 
-          <q-select
-            class="col"
-            outlined
-            readonly
-            emit-value
-            map-options
-            v-model="control.control_engine"
-            :options="[
-              { label: 'Database', value: 'DB' },
-              { label: 'Python', value: 'PY' },
-            ]"
-            label="Control engine" />
+                  <q-select
+                    class="col-2"
+                    outlined
+                    v-model="controlVersion"
+                    use-input
+                    hide-selected
+                    fill-input
+                    input-debounce="0"
+                    label="Version"
+                    :options="controlVersions"
+                    @filter="filterDatasourceList"
+                    @update:model-value="controlVersionChanged">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-tag" size="sm" @click.stop.prevent />
+                    </template>
+                    <template v-slot:no-option>
+                      <q-item>
+                        <q-item-section class="text-grey"> No past versions </q-item-section>
+                      </q-item>
+                    </template>
+                  </q-select>
+                </div>
 
-          <q-select
-            class="col"
-            outlined
-            emit-value
-            map-options
-            v-model="control.status"
-            :options="[
-              { label: 'Active', value: 'Y' },
-              { label: 'Inactive', value: 'N' },
-            ]"
-            label="Control schedulerstatus" />
+                <div class="row q-gutter-md">
+                  <q-input class="col" v-model="control.control_description" label="Control description" maxlength="500" outlined autogrow />
+                </div>
 
-          <q-select
-            class="col"
-            outlined
-            emit-value
-            map-options
-            v-model="control.need_prerun_hook"
-            :options="[
-              { label: 'Yes', value: 'Y' },
-              { label: 'No', value: 'N' },
-            ]"
-            label="Pre-run hook" />
+                <div class="row q-gutter-md">
+                  <q-select
+                    class="col"
+                    outlined
+                    emit-value
+                    map-options
+                    v-model="control.control_type"
+                    :options="[
+                      { label: 'REC - Reconciliation', value: 'REC' },
+                      { label: 'ANL - Analysis', value: 'ANL' },
+                      { label: 'REP - Report', value: 'REP' },
+                      { label: 'CMP - Comparison', value: 'CMP' },
+                      // { label: 'Key Performance Indicator', value: 'KPI' },
+                    ]"
+                    label="Control type"
+                    @update:model-value="controlTypeChanged" />
 
-          <q-select
-            class="col"
-            outlined
-            emit-value
-            map-options
-            v-model="control.need_postrun_hook"
-            :options="[
-              { label: 'Yes', value: 'Y' },
-              { label: 'No', value: 'N' },
-            ]"
-            label="Post-run hook" />
-        </div>
+                  <q-select
+                    class="col"
+                    outlined
+                    readonly
+                    emit-value
+                    map-options
+                    v-model="control.control_engine"
+                    :options="[
+                      { label: 'Database', value: 'DB' },
+                      { label: 'Python', value: 'PY' },
+                    ]"
+                    label="Control engine" />
 
-        <div class="row q-my-xs q-gutter-md">
-          <q-input class="col" v-model.number="control.parallelism" type="number" outlined label="Parallelism">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-microchip" @click.stop.prevent />
-            </template>
-          </q-input>
+                  <q-select
+                    class="col"
+                    outlined
+                    emit-value
+                    map-options
+                    v-model="control.need_prerun_hook"
+                    :options="[
+                      { label: 'Yes', value: 'Y' },
+                      { label: 'No', value: 'N' },
+                    ]"
+                    label="Pre-run hook" />
 
-          <q-input class="col" v-model.number="control.instance_limit" type="number" outlined label="Instance limit">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-stream" @click.stop.prevent />
-            </template>
-          </q-input>
+                  <q-select
+                    class="col"
+                    outlined
+                    emit-value
+                    map-options
+                    v-model="control.need_postrun_hook"
+                    :options="[
+                      { label: 'Yes', value: 'Y' },
+                      { label: 'No', value: 'N' },
+                    ]"
+                    label="Post-run hook" />
+                </div>
 
-          <q-input class="col" v-model.number="control.timeout" type="number" outlined label="Timeout (sec.)">
-            <template v-slot:prepend>
-              <q-icon name="fas fas fa-stopwatch" @click.stop.prevent />
-            </template>
-          </q-input>
+                <div class="row q-my-md q-gutter-md">
+                  <q-input class="col" v-model.number="control.parallelism" type="number" outlined label="Parallelism">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-microchip" @click.stop.prevent />
+                    </template>
+                  </q-input>
 
-          <q-input class="col" v-model.number="control.output_limit" type="number" outlined label="Output limit">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-list-ol" @click.stop.prevent />
-            </template>
-          </q-input>
+                  <q-input class="col" v-model.number="control.instance_limit" type="number" outlined label="Instance limit">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-stream" @click.stop.prevent />
+                    </template>
+                  </q-input>
 
-          <q-select
-            class="col"
-            outlined
-            emit-value
-            map-options
-            v-model="withDeleteionDrop"
-            :options="[
-              { label: 'After defined retention period', value: 'N' },
-              { label: 'On each run, with delete', value: 'deletion' },
-              { label: 'On each run, with drop', value: 'drop' },
-            ]"
-            label="Remove past results"
-            @update:model-value="deletionDropChanged" />
+                  <q-input class="col" v-model.number="control.timeout" type="number" outlined label="Timeout (sec.)">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fas fa-stopwatch" @click.stop.prevent />
+                    </template>
+                  </q-input>
 
-          <q-input
-            class="col"
-            v-model.number="control.days_retention"
-            v-if="withDeleteionDrop === 'N'"
-            type="number"
-            outlined
-            label="Retention period (days)"
-            :rules="[(val) => ((val || val === 0) && val >= 0) || 'Not a valid value']">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-trash-alt" @click.stop.prevent />
-            </template>
-          </q-input>
-        </div>
+                  <q-input class="col" v-model.number="control.output_limit" type="number" outlined label="Output limit">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-list-ol" @click.stop.prevent />
+                    </template>
+                  </q-input>
 
-        <div class="row q-my-xs q-gutter-md" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
-          <q-select
-            class="col"
-            outlined
-            v-model="control.source_name"
-            use-input
-            hide-selected
-            fill-input
-            input-debounce="0"
-            label="Datasource"
-            :options="datasourceListOptions"
-            @filter="filterDatasourceList"
-            :rules="[(val) => (val && val.length > 0) || 'You must select a datasource']">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-table" @click.stop.prevent />
-            </template>
-            <template v-slot:no-option>
-              <q-item>
-                <q-item-section class="text-grey"> No datasources found </q-item-section>
-              </q-item>
-            </template>
-          </q-select>
+                  <q-select
+                    class="col"
+                    outlined
+                    emit-value
+                    map-options
+                    v-model="withDeleteionDrop"
+                    :options="[
+                      { label: 'Yes', value: 'N' },
+                      { label: 'No, delete results table on each run', value: 'deletion' },
+                      { label: 'No, drop results table on each run', value: 'drop' },
+                    ]"
+                    label="Keep past results"
+                    @update:model-value="deletionDropChanged" />
 
-          <q-select
-            v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
-            class="col-2"
-            outlined
-            v-model="control.source_date_field"
-            label="Date column"
-            :options="datasourceDateColumns"
-            behavior="menu">
-            <template v-slot:prepend>
-              <q-icon name="far fa-calendar-alt" @click.stop.prevent />
-            </template>
-          </q-select>
-        </div>
+                  <q-input
+                    class="col"
+                    v-model.number="control.days_retention"
+                    v-if="withDeleteionDrop === 'N'"
+                    type="number"
+                    outlined
+                    label="Retention period (days)">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-trash-alt" @click.stop.prevent />
+                    </template>
+                  </q-input>
+                </div>
 
-        <div class="row q-my-xs q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
-          <q-select
-            class="col"
-            outlined
-            v-model="control.source_name_a"
-            use-input
-            hide-selected
-            fill-input
-            input-debounce="0"
-            label="Datasource A"
-            :options="datasourceListOptions"
-            @filter="filterDatasourceList"
-            :rules="[(val) => (val && val.length > 0) || 'You must select a datasource']">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-table" @click.stop.prevent />
-            </template>
-            <template v-slot:no-option>
-              <q-item>
-                <q-item-section class="text-grey"> No datasources found </q-item-section>
-              </q-item>
-            </template>
-          </q-select>
+                <div class="row q-my-md q-gutter-md">
+                  <q-btn label="Save" type="submit" color="primary" />
+                  <q-btn label="Cancel" type="reset" color="primary" flat class="q-ml-sm" />
+                </div>
+              </div>
+            </q-tab-panel>
 
-          <q-select
-            class="col"
-            outlined
-            v-model="control.source_name_b"
-            use-input
-            hide-selected
-            fill-input
-            input-debounce="0"
-            label="Datasource B"
-            :options="datasourceListOptions"
-            @filter="filterDatasourceList"
-            :rules="[(val) => (val && val.length > 0) || 'You must select a datasource']">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-table" @click.stop.prevent />
-            </template>
-            <template v-slot:no-option>
-              <q-item>
-                <q-item-section class="text-grey"> No datasources found </q-item-section>
-              </q-item>
-            </template>
-          </q-select>
-        </div>
+            <q-tab-panel name="data">
+              <div class="q-ma-lg q-gutter-y-md">
+                <div class="row q-gutter-md" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
+                  <q-select
+                    class="col"
+                    outlined
+                    v-model="control.source_name"
+                    use-input
+                    hide-selected
+                    fill-input
+                    input-debounce="0"
+                    label="Datasource"
+                    :options="datasourceListOptions"
+                    @filter="filterDatasourceList">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-table" @click.stop.prevent />
+                    </template>
+                    <template v-slot:no-option>
+                      <q-item>
+                        <q-item-section class="text-grey"> No datasources found </q-item-section>
+                      </q-item>
+                    </template>
+                  </q-select>
 
-        <div v-if="control.control_type === 'REC' || control.control_type === 'CMP'" class="row q-gutter-md">
-          <q-select
-            class="col-2"
-            outlined
-            v-model="control.source_date_field_a"
-            label="Date column A"
-            :options="datasourceADateColumns"
-            behavior="menu"
-            :rules="[(val) => (val && val.length > 0) || 'No date column to select!']">
-            <template v-slot:prepend>
-              <q-icon name="far fa-calendar-alt" @click.stop.prevent />
-            </template>
-          </q-select>
+                  <q-select
+                    v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
+                    class="col-2"
+                    outlined
+                    v-model="control.source_date_field"
+                    label="Date column"
+                    :options="datasourceDateColumns"
+                    behavior="menu">
+                    <template v-slot:prepend>
+                      <q-icon name="far fa-calendar-alt" @click.stop.prevent />
+                    </template>
+                  </q-select>
+                </div>
 
-          <q-icon class="q-py-md" name="fas fa-equals" size="20px" color="blue-grey-3" />
+                <div class="row q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
+                  <q-select
+                    class="col"
+                    outlined
+                    v-model="control.source_name_a"
+                    use-input
+                    hide-selected
+                    fill-input
+                    input-debounce="0"
+                    label="Datasource A"
+                    :options="datasourceListOptions"
+                    @filter="filterDatasourceList">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-table" @click.stop.prevent />
+                    </template>
+                    <template v-slot:no-option>
+                      <q-item>
+                        <q-item-section class="text-grey"> No datasources found </q-item-section>
+                      </q-item>
+                    </template>
+                  </q-select>
 
-          <q-select
-            class="col-2"
-            outlined
-            v-model="control.source_date_field_b"
-            label="Date column B"
-            :options="datasourceBDateColumns"
-            behavior="menu"
-            :rules="[(val) => (val && val.length > 0) || 'No date column to select!']">
-            <template v-slot:prepend>
-              <q-icon name="far fa-calendar-alt" @click.stop.prevent />
-            </template>
-          </q-select>
+                  <q-select
+                    class="col"
+                    outlined
+                    v-model="control.source_name_b"
+                    use-input
+                    hide-selected
+                    fill-input
+                    input-debounce="0"
+                    label="Datasource B"
+                    :options="datasourceListOptions"
+                    @filter="filterDatasourceList">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-table" @click.stop.prevent />
+                    </template>
+                    <template v-slot:no-option>
+                      <q-item>
+                        <q-item-section class="text-grey"> No datasources found </q-item-section>
+                      </q-item>
+                    </template>
+                  </q-select>
+                </div>
 
-          <q-icon class="q-py-md" name="fas fa-circle" size="20px" color="blue-grey-3" />
+                <div class="row q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
+                  <q-select
+                    class="col-2"
+                    outlined
+                    v-model="control.source_date_field_a"
+                    label="Date column A"
+                    :options="datasourceADateColumns"
+                    behavior="menu">
+                    <template v-slot:prepend>
+                      <q-icon name="far fa-calendar-alt" @click.stop.prevent />
+                    </template>
+                  </q-select>
 
-          <q-input outlined class="col" v-model.number="ruleConfigObject.time_shift_from" type="number" label="Time shift from">
-            <template v-slot:prepend>
-              <q-icon name="far fa-clock" @click.stop.prevent />
-            </template>
-          </q-input>
+                  <q-icon class="q-py-md" name="fas fa-equals" size="20px" color="blue-grey-3" />
 
-          <q-input outlined class="col" v-model.number="ruleConfigObject.time_shift_to" type="number" label="Time shift to">
-            <template v-slot:prepend>
-              <q-icon name="far fa-clock" @click.stop.prevent />
-            </template>
-          </q-input>
+                  <q-select
+                    class="col-2"
+                    outlined
+                    v-model="control.source_date_field_b"
+                    label="Date column B"
+                    :options="datasourceBDateColumns"
+                    behavior="menu">
+                    <template v-slot:prepend>
+                      <q-icon name="far fa-calendar-alt" @click.stop.prevent />
+                    </template>
+                  </q-select>
 
-          <q-input outlined class="col" v-model.number="ruleConfigObject.time_tolerance_from" type="number" label="Time tolerance from">
-            <template v-slot:prepend>
-              <q-icon name="far fa-clock" @click.stop.prevent />
-            </template>
-          </q-input>
+                  <q-icon v-if="control.control_type === 'REC'" class="q-py-md" name="fas fa-circle" size="15px" color="blue-grey-3" />
 
-          <q-input outlined class="col" v-model.number="ruleConfigObject.time_tolerance_to" type="number" label="Time tolerance to">
-            <template v-slot:prepend>
-              <q-icon name="far fa-clock" @click.stop.prevent />
-            </template>
-          </q-input>
-        </div>
+                  <q-input
+                    v-if="control.control_type === 'REC'"
+                    outlined
+                    class="col"
+                    v-model.number="ruleConfigObject.time_tolerance_from"
+                    type="number"
+                    label="Time tolerance from">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-long-arrow-alt-left" @click.stop.prevent />
+                    </template>
+                  </q-input>
 
-        <div class="row q-my-xs q-gutter-md">
-          <q-select
-            v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
-            class="col"
-            outlined
-            clearable
-            v-model="control.output_table_columns"
-            multiple
-            :options="datasourceColumns"
-            use-chips
-            stack-label
-            label="Select output (leave empty for all columns)">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns()" />
-            </template>
-          </q-select>
+                  <q-input
+                    v-if="control.control_type === 'REC'"
+                    outlined
+                    class="col"
+                    v-model.number="ruleConfigObject.time_tolerance_to"
+                    type="number"
+                    label="Time tolerance to">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-long-arrow-alt-right" @click.stop.prevent />
+                    </template>
+                  </q-input>
 
-          <q-select
-            v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
-            class="col"
-            outlined
-            clearable
-            v-model="control.output_table_a_columns"
-            multiple
-            :options="datasourceAColumns"
-            use-chips
-            stack-label
-            label="Select output A-side (leave empty for all columns)">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('A')" />
-            </template>
-          </q-select>
+                  <q-icon v-if="control.control_type === 'REC'" class="q-py-md" name="fas fa-circle" size="15px" color="blue-grey-3" />
 
-          <q-select
-            v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
-            class="col"
-            outlined
-            clearable
-            v-model="control.output_table_b_columns"
-            multiple
-            :options="datasourceBColumns"
-            use-chips
-            stack-label
-            label="Select output B-side (leave empty for all columns)">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('B')" />
-            </template>
-          </q-select>
-        </div>
+                  <q-input
+                    v-if="control.control_type === 'REC'"
+                    outlined
+                    class="col"
+                    v-model.number="ruleConfigObject.time_shift_from"
+                    type="number"
+                    label="Time shift from">
+                    <template v-slot:prepend>
+                      <q-icon name="far fa-clock" @click.stop.prevent />
+                    </template>
+                  </q-input>
 
-        <div class="row q-my-xs q-gutter-md">
-          <div class="col" v-if="control.control_type == 'CMP'">
-            <code-box label="Matching criteria (Rule config)" v-model="control.rule_config"> </code-box>
-          </div>
-          <div class="col" v-if="control.control_type !== 'REC' && control.control_type !== 'REP'">
-            <code-box label="Missmatch criteria (Error definition)" v-model="control.error_definition"> </code-box>
-          </div>
-        </div>
+                  <q-input
+                    v-if="control.control_type === 'REC'"
+                    outlined
+                    class="col"
+                    v-model.number="ruleConfigObject.time_shift_to"
+                    type="number"
+                    label="Time shift to">
+                    <template v-slot:prepend>
+                      <q-icon name="far fa-clock" @click.stop.prevent />
+                    </template>
+                  </q-input>
+                </div>
 
-        <div class="row q-my-xs q-gutter-md" v-if="inputs.includes('filter')">
-          <div class="col" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
-            <code-box label="Filter" v-model="control.source_filter"> </code-box>
-          </div>
-          <div class="col" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
-            <code-box label="Filter (Datasource A)" v-model="control.source_filter_a"> </code-box>
-          </div>
-          <div class="col" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
-            <code-box label="Filter (Datasource B)" v-model="control.source_filter_b"> </code-box>
-          </div>
-        </div>
+                <div class="row q-gutter-md">
+                  <q-select
+                    v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
+                    class="col"
+                    outlined
+                    clearable
+                    v-model="control.output_table_columns"
+                    multiple
+                    :options="datasourceColumns"
+                    use-chips
+                    stack-label
+                    label="Select output (leave empty for all columns)">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns()" />
+                    </template>
+                  </q-select>
 
-        <div class="row q-my-xs q-gutter-md" v-if="control.control_type === 'REC'">
-          <reconciliation-config-box
-            class="col"
-            v-model="this.ruleConfigObject"
-            :datasource-a-columns="this.datasourceAColumns"
-            :datasource-b-columns="this.datasourceBColumns">
-          </reconciliation-config-box>
-        </div>
+                  <q-select
+                    v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
+                    class="col"
+                    outlined
+                    clearable
+                    v-model="control.output_table_a_columns"
+                    multiple
+                    :options="datasourceAColumns"
+                    use-chips
+                    stack-label
+                    label="Select output A-side (leave empty for all columns)">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('A')" />
+                    </template>
+                  </q-select>
 
-        <div class="row q-my-xs q-gutter-md" v-if="inputs.includes('case_config') && control.control_type !== 'REP' && control.control_type !== 'REC'">
-          <div class="col">
-            <code-box label="Case config" v-model="control.case_config"> </code-box>
-          </div>
-          <div class="col">
-            <code-box label="Result config" v-model="control.case_definition"> </code-box>
-          </div>
-        </div>
+                  <q-select
+                    v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
+                    class="col"
+                    outlined
+                    clearable
+                    v-model="control.output_table_b_columns"
+                    multiple
+                    :options="datasourceBColumns"
+                    use-chips
+                    stack-label
+                    label="Select output B-side (leave empty for all columns)">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('B')" />
+                    </template>
+                  </q-select>
+                </div>
 
-        <div class="row q-my-xs q-gutter-md" v-if="inputs.includes('preparation_sql')">
-          <div class="col">
-            <code-box label="Preparation SQL" v-model="control.preparation_sql"> </code-box>
-          </div>
-        </div>
+                <div class="row q-my-sm q-gutter-md">
+                  <div class="col" v-if="control.control_type === 'ANL' || control.control_type === 'REP'">
+                    <code-box label="Filter" v-model="control.source_filter"> </code-box>
+                  </div>
+                  <div class="col" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
+                    <code-box label="Filter (Datasource A)" v-model="control.source_filter_a"> </code-box>
+                  </div>
+                  <div class="col" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
+                    <code-box label="Filter (Datasource B)" v-model="control.source_filter_b"> </code-box>
+                  </div>
+                </div>
 
-        <div class="row q-my-xs q-gutter-md" v-if="inputs.includes('prerequisite_sql')">
-          <div class="col">
-            <code-box label="Prerequisite SQL" v-model="control.prerequisite_sql"> </code-box>
-          </div>
-        </div>
+                <div class="row q-my-xs q-gutter-md">
+                  <div class="col" v-if="control.control_type == 'CMP'">
+                    <code-box label="Match criteria (Rule config)" v-model="control.rule_config"> </code-box>
+                  </div>
+                  <div class="col" v-if="control.control_type !== 'REC' && control.control_type !== 'REP'">
+                    <code-box label="Mismatch criteria (Error definition)" v-model="control.error_definition"> </code-box>
+                  </div>
+                </div>
 
-        <div class="row q-my-xs q-gutter-md" v-if="inputs.includes('completion_sql')">
-          <div class="col">
-            <code-box label="Completion SQL" v-model="control.completion_sql"> </code-box>
-          </div>
-        </div>
+                <div class="row q-gutter-md" v-if="control.control_type === 'REC'">
+                  <reconciliation-match-criteria-box
+                    class="col"
+                    v-model="this.ruleConfigObject"
+                    :datasource-a-columns="this.datasourceAColumns"
+                    :datasource-b-columns="this.datasourceBColumns">
+                  </reconciliation-match-criteria-box>
+                </div>
 
-        <div class="row q-my-xs q-gutter-md">
-          <q-toggle color="blue" label="Datasource filter" v-model="inputs" val="filter" />
-          <q-toggle
-            v-if="control.control_type !== 'REP' && control.control_type !== 'REC'"
-            color="blue"
-            label="Case config"
-            v-model="inputs"
-            val="case_config" />
-          <q-toggle color="blue" label="Preparation SQL" v-model="inputs" val="preparation_sql" />
-          <q-toggle color="blue" label="Prerequisite SQL" v-model="inputs" val="prerequisite_sql" />
-          <q-toggle color="blue" label="Completion SQL" v-model="inputs" val="completion_sql" />
-        </div>
+                <div class="row q-gutter-md" v-if="control.control_type === 'REC'">
+                  <reconciliation-mis-match-criteria-box
+                    class="col"
+                    v-model="this.ruleConfigObject"
+                    :datasource-a-columns="this.datasourceANumColumns"
+                    :datasource-b-columns="this.datasourceBNumColumns">
+                  </reconciliation-mis-match-criteria-box>
+                </div>
 
-        <div class="row q-my-lg q-gutter-md">
-          <schedule-edit-box class="col" v-model="control.schedule_config"></schedule-edit-box>
+                <div class="row q-my-md q-gutter-md">
+                  <q-btn label="Save" type="submit" color="primary" />
+                  <q-btn label="Cancel" type="reset" color="primary" flat class="q-ml-sm" />
+                </div>
+              </div>
+            </q-tab-panel>
 
-          <q-select
-            class="col-1"
-            outlined
-            emit-value
-            map-options
-            v-model="control.period_type"
-            :options="[
-              { label: 'Days', value: 'D' },
-              { label: 'Weeks', value: 'W' },
-              { label: 'Months', value: 'M' },
-            ]"
-            label="Period type" />
+            <q-tab-panel name="sql">
+              <div class="q-ma-lg q-gutter-y-md">
+                <div class="row q-gutter-md">
+                  <div class="col">
+                    <code-box label="Preparation SQL" v-model="control.preparation_sql"> </code-box>
+                  </div>
+                </div>
 
-          <q-input
-            outlined
-            class="col-1"
-            v-model.number="control.period_back"
-            type="number"
-            label="Periods back"
-            :rules="[(val) => ((val || val === 0 || val < 5) && val >= 0) || 'Not a valid value']">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-history" @click.stop.prevent />
-            </template>
-          </q-input>
+                <div class="row q-gutter-md">
+                  <div class="col">
+                    <code-box label="Prerequisite SQL" v-model="control.prerequisite_sql"> </code-box>
+                  </div>
+                </div>
 
-          <q-input
-            class="col-auto"
-            v-model.number="control.period_number"
-            type="number"
-            outlined
-            label="For # of periods"
-            :rules="[(val) => ((val || val === 0 || val < 5) && val >= 0) || 'Not a valid value']">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-calendar-day" @click.stop.prevent />
-            </template>
-          </q-input>
-        </div>
-        <q-btn label="Save" type="submit" color="primary" />
-        <q-btn label="Cancel" type="reset" color="primary" flat class="q-ml-sm" />
-      </q-form>
+                <div class="row q-gutter-md">
+                  <div class="col">
+                    <code-box label="Completion SQL" v-model="control.completion_sql"> </code-box>
+                  </div>
+                </div>
+
+                <div class="row q-my-md q-gutter-md">
+                  <q-btn label="Save" type="submit" color="primary" />
+                  <q-btn label="Cancel" type="reset" color="primary" flat class="q-ml-sm" />
+                </div>
+              </div>
+            </q-tab-panel>
+
+            <q-tab-panel name="case">
+              <div class="q-ma-lg q-gutter-y-md">
+                <div class="row q-gutter-md">
+                  <div class="col">
+                    <!-- <code-box label="Case config" v-model="control.case_config"> </code-box> -->
+                    <case-config-box class="col" v-model="this.caseConfigObject"> </case-config-box>
+                    <br />
+                    <code-box label="Result config" v-model="control.case_definition"> </code-box>
+                  </div>
+                </div>
+
+                <div class="row q-my-md q-gutter-md">
+                  <q-btn label="Save" type="submit" color="primary" />
+                  <q-btn label="Cancel" type="reset" color="primary" flat class="q-ml-sm" />
+                </div>
+              </div>
+            </q-tab-panel>
+
+            <q-tab-panel name="scheduler">
+              <div class="q-ma-lg q-gutter-y-md">
+                <div class="row q-gutter-md">
+                  <q-select
+                    class="col-2"
+                    outlined
+                    emit-value
+                    map-options
+                    v-model="control.status"
+                    :options="[
+                      { label: 'Active', value: 'Y' },
+                      { label: 'Inactive', value: 'N' },
+                    ]"
+                    label="Scheduler status" />
+
+                  <schedule-edit-box class="col" v-model="scheduleObject"></schedule-edit-box>
+                </div>
+
+                <div class="row q-gutter-md">
+                  <q-select
+                    class="col-2"
+                    outlined
+                    emit-value
+                    map-options
+                    v-model="control.period_type"
+                    :options="[
+                      { label: 'Days', value: 'D' },
+                      { label: 'Weeks', value: 'W' },
+                      { label: 'Months', value: 'M' },
+                    ]"
+                    label="Period type" />
+
+                  <q-input outlined class="col-2" v-model.number="control.period_back" type="number" label="Periods back">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-history" @click.stop.prevent />
+                    </template>
+                  </q-input>
+
+                  <q-input class="col-2" v-model.number="control.period_number" type="number" outlined label="For # of periods">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-calendar-day" @click.stop.prevent />
+                    </template>
+                  </q-input>
+                </div>
+
+                <div class="row q-gutter-md">
+                  <iteration-config-box class="col" v-model="iterationConfigObject"> </iteration-config-box>
+                </div>
+
+                <div class="row q-gutter-md">
+                  <q-btn label="Save" type="submit" color="primary" />
+                  <q-btn label="Cancel" type="reset" color="primary" flat class="q-ml-sm" />
+                </div>
+              </div>
+            </q-tab-panel>
+          </q-tab-panels>
+        </q-form>
+      </q-card>
     </div>
 
     <!-- <p class="q-ma-xl">{{ control }}</p> -->
@@ -484,13 +573,19 @@ import { useQuasar } from "quasar";
 import { mapGetters } from "vuex";
 import CodeBox from "./CodeBox.vue";
 import ScheduleEditBox from "./ScheduleEditBox.vue";
-import ReconciliationConfigBox from "./ReconciliationConfigBox.vue";
+import ReconciliationMatchCriteriaBox from "./ReconciliationMatchCriteriaBox.vue";
+import ReconciliationMisMatchCriteriaBox from "./ReconciliationMisMatchCriteriaBox.vue";
+import CaseConfigBox from "./CaseConfigBox.vue";
+import IterationConfigBox from "./IterationConfigBox.vue";
 
 export default {
   components: {
     CodeBox,
     ScheduleEditBox,
-    ReconciliationConfigBox,
+    ReconciliationMatchCriteriaBox,
+    ReconciliationMisMatchCriteriaBox,
+    CaseConfigBox,
+    IterationConfigBox,
   },
   props: {
     controlId: {
@@ -500,6 +595,7 @@ export default {
   },
   data() {
     return {
+      tab: "main",
       control: {},
       controlVersions: [],
       controlVersion: "ACTUAL",
@@ -507,27 +603,25 @@ export default {
       datasourceDateColumns: null,
       datasourceAColumns: null,
       datasourceADateColumns: null,
+      datasourceANumColumns: null,
       datasourceBColumns: null,
       datasourceBDateColumns: null,
+      datasourceBNumColumns: null,
       datasourceList: null,
       datasourceListOptions: null,
       datasourceListAOptions: null,
       datasourceListBOptions: null,
       withDeleteionDrop: "N",
-      ruleConfigObject: {
-        need_issues_a: true,
-        need_issues_b: true,
-        need_recons_a: false,
-        need_recons_b: false,
-        allow_duplicates: false,
-        time_shift_from: 0,
-        time_shift_to: 0,
-        time_tolerance_from: 0,
-        time_tolerance_to: 0,
-        correlation_config: [],
-        discrepancy_config: [],
+      scheduleObject: {
+        mday: null,
+        wday: null,
+        hour: "8",
+        min: "15",
+        sec: "0",
       },
-      inputs: [],
+      ruleConfigObject: {},
+      caseConfigObject: [],
+      iterationConfigObject: [],
       $q: useQuasar(),
     };
   },
@@ -579,7 +673,7 @@ export default {
           this.$q.loadingBar.stop();
         });
     },
-    async getDatasourceColumns(datasource_name) {
+    async getDatasourceColumns(datasource_name, which) {
       const response = await fetch("/api/get-datasource-columns?datasource_name=" + datasource_name, {
         method: "GET",
         headers: {
@@ -589,20 +683,19 @@ export default {
       });
       if (response.ok) {
         const data = await response.json();
-        return data;
-      }
-    },
-    async getDatasourceDateColumns(datasource_name) {
-      const response = await fetch("/api/get-datasource-date-columns?datasource_name=" + datasource_name, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${this.$store.getters.getToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return data;
+        var ret;
+        // data is array of objects {column_name, data_type}. Create an array containing only the columns from type `which`: NUMBER, VARCHAR2, DATE
+        if (which === "numeric") {
+          ret = data.filter((item) => item.data_type === "NUMBER").map((item) => item.column_name);
+        } else if (which === "string") {
+          ret = data.filter((item) => item.data_type === "VARCHAR2" || item.data_type === "VARCHAR").map((item) => item.column_name);
+        } else if (which === "date") {
+          ret = data.filter((item) => item.data_type === "DATE" || item.data_type === "TIMESTAMP").map((item) => item.column_name);
+        } else {
+          ret = data.map((item) => item.column_name);
+        }
+
+        return ret;
       }
     },
     populateColumns(side) {
@@ -614,7 +707,7 @@ export default {
         this.control.output_table_columns = this.datasourceColumns;
       }
     },
-    controlTypeChanged() {
+    controlTypeChanged(newValue) {
       this.control.source_name = null;
       this.control.source_name_a = null;
       this.control.source_name_b = null;
@@ -637,6 +730,31 @@ export default {
       this.control.output_table_columns = [];
       this.control.output_table_a_columns = [];
       this.control.output_table_b_columns = [];
+
+      if (newValue === "REC") {
+        this.ruleConfigObject = {
+          need_issues_a: true,
+          need_issues_b: true,
+          need_recons_a: false,
+          need_recons_b: false,
+          allow_duplicates: false,
+          time_shift_from: 0,
+          time_shift_to: 0,
+          time_tolerance_from: 0,
+          time_tolerance_to: 0,
+          correlation_config: [],
+          discrepancy_config: [],
+        };
+
+        this.control.source_key_field_a = "TAG";
+        this.control.source_key_field_b = "TAG";
+      } else if (newValue === "CMP") {
+        this.ruleConfigObject = {};
+      } else if (newValue === "REP") {
+        this.ruleConfigObject = {};
+      } else if (newValue === "ANL") {
+        this.ruleConfigObject = {};
+      }
     },
     async getControlVersions(controlId) {
       const response = await fetch("/api/get-control-versions?control_id=" + controlId, {
@@ -659,40 +777,33 @@ export default {
     controlVersionChanged() {
       this.control = this.controlVersion;
 
+      this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
+
       try {
         if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
           this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
-          this.getDatasourceDateColumns(this.control.source_name).then((data) => (this.datasourceDateColumns = data));
+          this.getDatasourceColumns(this.control.source_name, "date").then((data) => (this.datasourceDateColumns = data));
         } else {
           this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
           this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
-          this.getDatasourceDateColumns(this.control.source_name_a).then((data) => (this.datasourceADateColumns = data));
+          this.getDatasourceColumns(this.control.source_name_a, "date").then((data) => (this.datasourceADateColumns = data));
+          this.getDatasourceColumns(this.control.source_name_a, "numeric").then((data) => (this.datasourceANumColumns = data));
           this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
-          this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBDateColumns = data));
+          this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
+          this.getDatasourceColumns(this.control.source_name_b, "numeric").then((data) => (this.datasourceBNumColumns = data));
         }
       } catch (err) {
         console.log(err);
       }
 
-      // Update UI switch buttons "inputs" based on the present fields
-      if (this.control.source_filter || this.control.source_filter_a || this.control.source_filter_b) {
-        this.inputs.push("filter");
+      if (this.control.rule_config) {
+        this.ruleConfigObject = JSON.parse(this.control.rule_config);
       }
-      if (this.control.case_config || this.control.result_config) {
-        this.inputs.push("case_config");
+      if (this.control.case_config) {
+        this.caseConfigObject = JSON.parse(this.control.case_config);
       }
-      if (this.control.preparation_sql) {
-        this.inputs.push("preparation_sql");
-      }
-      if (this.control.prerequisite_sql) {
-        this.inputs.push("prerequisite_sql");
-      }
-      if (this.control.completion_sql) {
-        this.inputs.push("completion_sql");
-      }
-
       this.withDeleteionDrop = this.control.with_drop === "Y" ? "drop" : this.control.with_deletion === "Y" ? "deletion" : "N";
     },
     deletionDropChanged() {
@@ -713,11 +824,72 @@ export default {
       }
       return str;
     },
+    toScheduleString(scheduleObject) {
+      var ret = {
+        mday: scheduleObject.mday ? String(scheduleObject.mday) : null,
+        wday: scheduleObject.wday ? String(scheduleObject.wday) : null,
+        hour: String(scheduleObject.hour),
+        min: String(scheduleObject.min),
+        sec: String(scheduleObject.sec),
+      };
+      return JSON.stringify(ret);
+    },
+    toScheduleObject(scheduleString) {
+      var ret = {
+        mday: null,
+        wday: null,
+        hour: "8",
+        min: "15",
+        sec: "0",
+      };
+
+      var scheduleType = null;
+
+      if (scheduleString) {
+        ret = JSON.parse(scheduleString);
+        // Determine schedule type
+        if (!scheduleType) {
+          if (
+            String(scheduleString).indexOf("/") > -1 ||
+            String(scheduleString).indexOf("-") > -1 ||
+            (String(ret.mday).indexOf(",") > -1 && String(ret.wday).indexOf(",") > -1) ||
+            (String(ret.hour) + String(ret.min) + String(ret.sec)).indexOf(",") > -1
+          ) {
+            scheduleType = "X";
+          } else if (ret.mday) {
+            scheduleType = "M";
+          } else if (ret.wday) {
+            scheduleType = "W";
+          } else {
+            scheduleType = "D";
+          }
+
+          // Convert components to arrays in case of simple scheduler
+          if (scheduleType !== "X") {
+            if (ret.mday) {
+              ret.mday = String(ret.mday)
+                .split(",")
+                .map((i) => Number(i));
+            }
+
+            if (ret.wday) {
+              ret.wday = String(ret.wday)
+                .split(",")
+                .map((i) => Number(i));
+            }
+          }
+        }
+      }
+
+      return ret;
+    },    
     save() {
       // Add new line if last line contains a comment to avoid RAPO SQL builder issue
       this.control.source_filter = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter);
       this.control.source_filter_a = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter_a);
       this.control.source_filter_b = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter_b);
+
+      this.control.schedule_config = this.toScheduleString(this.scheduleObject);
 
       // this.control.rule_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.rule_config);
       // this.control.error_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.error_config);
@@ -748,8 +920,19 @@ export default {
             columns: this.control.output_table_b_columns,
           });
         }
-
         this.control.rule_config = JSON.stringify(this.ruleConfigObject);
+      }
+
+      if (this.caseConfigObject.length > 0) {
+        this.control.case_config = JSON.stringify(this.caseConfigObject);
+      } else {
+        this.control.case_config = null;
+      }
+
+      if (this.iterationConfigObject.length > 0) {
+        this.control.iteration_config = JSON.stringify(this.iterationConfigObject);
+      } else {
+        this.control.iteration_config = null;
       }
 
       // Set key columns to 'TAG' if they are not set
@@ -814,6 +997,60 @@ export default {
           this.$router.push({ name: "controls" });
         });
     },
+    validateAndSave() {
+      var errorTab = null;
+      if (!this.control.control_name) {
+        this.$q.notify({
+          type: "negative",
+          message: "Please enter a control name.",
+        });
+        errorTab = "main";
+      } else if (this.control.with_drop === "N" && this.control.with_deletion === "N" && !this.control.days_retention) {
+        // validate if data source is selected
+
+        this.$q.notify({
+          type: "negative",
+          message: "Please select data retention period",
+        });
+        errorTab = "main";
+      } else if (this.control.control_type === "REC" || this.control.control_type === "CMP") {
+        // validate if data source is selected
+        if (!this.control.source_name_a || !this.control.source_name_b) {
+          this.$q.notify({
+            type: "negative",
+            message: "Please select a data source for both A and B.",
+          });
+          errorTab = "data";
+        } else if (!this.control.source_date_field_a || !this.control.source_date_field_b) {
+          this.$q.notify({
+            type: "negative",
+            message: "Please select a date columns for both A and B datasources.",
+          });
+          errorTab = "data";
+        }
+      } else if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
+        // validate if data source is selected
+        if (!this.control.source_name) {
+          this.$q.notify({
+            type: "negative",
+            message: "Please select a data source.",
+          });
+          errorTab = "data";
+        }
+      } else if (!this.control.period_back || !this.control.period_number) {
+        this.$q.notify({
+          type: "negative",
+          message: "Please enter a period back and number of periods.",
+        });
+        errorTab = "scheduler";
+      }
+
+      if (!errorTab) {
+        this.save(); // Call your save method
+      } else {
+        this.tab = errorTab;
+      }
+    },
     cancel() {
       this.$q.notify({
         type: "warning",
@@ -833,10 +1070,11 @@ export default {
         // this.control.output_table_columns = data;
         if (oldDatasource && oldDatasource !== newDatasource) {
           this.control.output_table_columns = null;
+          // this.control.source_filter = "-- Columns:" + JSON.stringify(data) + "\n";
         }
       });
 
-      this.getDatasourceDateColumns(newDatasource).then((data) => {
+      this.getDatasourceColumns(newDatasource, "date").then((data) => {
         this.datasourceDateColumns = data;
         this.datasourceDateColumns.push(null);
 
@@ -855,14 +1093,18 @@ export default {
       this.getDatasourceColumns(newDatasource).then((data) => {
         this.datasourceAColumns = data;
         if (oldDatasource && oldDatasource !== newDatasource) {
-          this.control.source_filter_a = "-- " + JSON.stringify(data) + "\n";
+          // this.control.source_filter_a = "-- Columns:" + JSON.stringify(data) + "\n";
           this.control.output_table_a_columns = null;
         }
       });
 
-      this.getDatasourceDateColumns(newDatasource).then((data) => {
+      this.getDatasourceColumns(newDatasource, "date").then((data) => {
         this.datasourceADateColumns = data;
         this.control.source_date_field_a = data[0];
+      });
+
+      this.getDatasourceColumns(newDatasource, "numeric").then((data) => {
+        this.datasourceANumColumns = data;
       });
     },
     "control.source_name_b": function (newDatasource, oldDatasource) {
@@ -873,39 +1115,19 @@ export default {
       this.getDatasourceColumns(newDatasource).then((data) => {
         this.datasourceBColumns = data;
         if (oldDatasource && oldDatasource !== newDatasource) {
+          // this.control.source_filter_b = "-- Columns: " + JSON.stringify(data) + "\n";
           this.control.output_table_b_columns = null;
         }
       });
 
-      this.getDatasourceDateColumns(newDatasource).then((data) => {
+      this.getDatasourceColumns(newDatasource, "date").then((data) => {
         this.datasourceBDateColumns = data;
         this.control.source_date_field_b = data[0];
       });
-    },
 
-    inputs() {
-      if (!this.inputs.includes("filter")) {
-        this.control.source_filter = "";
-        this.control.source_filter_a = "";
-        this.control.source_filter_b = "";
-      }
-
-      if (!this.inputs.includes("case_config")) {
-        this.control.case_config = "";
-        this.control.result_config = "";
-      }
-
-      if (!this.inputs.includes("preparation_sql")) {
-        this.control.preparation_sql = "";
-      }
-
-      if (!this.inputs.includes("prerequisite_sql")) {
-        this.control.prerequisite_sql = "";
-      }
-
-      if (!this.inputs.includes("completion_sql")) {
-        this.control.completion_sql = "";
-      }
+      this.getDatasourceColumns(newDatasource, "numeric").then((data) => {
+        this.datasourceBNumColumns = data;
+      });
     },
   },
   mounted() {
@@ -916,6 +1138,8 @@ export default {
     if (controlData) {
       this.control = controlData;
       this.getControlVersions(this.controlId);
+
+      this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
 
       // Force insert instead of update if clone
       if (this.$route.query.clone) {
@@ -929,43 +1153,34 @@ export default {
             this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
           }
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
-          this.getDatasourceDateColumns(this.control.source_name).then((data) => (this.datasourceDateColumns = data));
+          this.getDatasourceColumns(this.control.source_name, "date").then((data) => (this.datasourceDateColumns = data));
         } else if (this.control.control_type === "REC" || this.control.control_type === "CMP") {
           if (this.control["output_table_a"]) {
             this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
           }
           this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
-          this.getDatasourceDateColumns(this.control.source_name_a).then((data) => (this.datasourceADateColumns = data));
+          this.getDatasourceColumns(this.control.source_name_a, "date").then((data) => (this.datasourceADateColumns = data));
+          this.getDatasourceColumns(this.control.source_name_a, "numeric").then((data) => (this.datasourceANumColumns = data));
 
           if (this.control["output_table_b"]) {
             this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
           }
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
-          this.getDatasourceDateColumns(this.control.source_name_b).then((data) => (this.datasourceBDateColumns = data));
+          this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
+          this.getDatasourceColumns(this.control.source_name_b, "numeric").then((data) => (this.datasourceBNumColumns = data));
+        }
 
-          if (this.control.rule_config) {
-            this.ruleConfigObject = JSON.parse(this.control.rule_config);
-          }
+        if (this.control.rule_config) {
+          this.ruleConfigObject = JSON.parse(this.control.rule_config);
+        }
+        if (this.control.case_config) {
+          this.caseConfigObject = JSON.parse(this.control.case_config);
+        }
+        if (this.control.iteration_config) {
+          this.iterationConfigObject = JSON.parse(this.control.iteration_config);
         }
       } catch (err) {
         console.log(err);
-      }
-
-      // Update UI switch buttons "inputs" based on the present fields
-      if (this.control.source_filter?.trim() || this.control.source_filter_a?.trim() || this.control.source_filter_b?.trim()) {
-        this.inputs.push("filter");
-      }
-      if (this.control.case_config?.trim() || this.control.result_config?.trim()) {
-        this.inputs.push("case_config");
-      }
-      if (this.control.preparation_sql?.trim()) {
-        this.inputs.push("preparation_sql");
-      }
-      if (this.control.prerequisite_sql?.trim()) {
-        this.inputs.push("prerequisite_sql");
-      }
-      if (this.control.completion_sql?.trim()) {
-        this.inputs.push("completion_sql");
       }
 
       this.withDeleteionDrop = this.control.with_drop === "Y" ? "drop" : this.control.with_deletion === "Y" ? "deletion" : "N";
@@ -982,7 +1197,6 @@ export default {
         with_drop: "N",
         days_back: 1,
         days_retention: 90,
-        schedule_config: "",
         timeout: 3600,
         instance_limit: 1,
         period_type: "D",
@@ -992,7 +1206,6 @@ export default {
       };
     }
 
-    // console.log(this.control);
   },
 };
 </script>

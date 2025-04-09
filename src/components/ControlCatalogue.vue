@@ -5,7 +5,7 @@
     <q-btn class="q-my-lg" size="lg" color="primary" icon="fas fa-plus" label="New control" :to="{ name: 'edit-control', params: { controlId: 'new' } }" />
 
     <div>
-      <q-markup-table dense>
+      <q-markup-table>
         <thead>
           <tr class="bg-blue-grey-2">
             <th class="text-center" style="width: 50px">Type</th>
@@ -49,7 +49,7 @@
             </td>
             <td style="width: 100px">
               <div class="row justify-start items-center">
-                <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>
+                <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>             
               </div>
             </td>
             <td class="text-left">
@@ -88,15 +88,31 @@
                   @click="$q.notify(control.preparation_sql)">
                   Preparation SQL
                 </q-chip>
-                <q-chip clickable v-if="control.with_drop === 'Y'" size="sm" color="indigo-4" text-color="white" icon="fas fa-trash-alt"> With Drop </q-chip>
-                <q-chip clickable v-if="control.with_deletion === 'Y'" size="sm" color="indigo-4" text-color="white" icon="fas fa-trash-alt">
-                  With Delete
+                <q-chip
+                  clickable
+                  v-if="control.completion_sql"
+                  size="sm"
+                  color="indigo-4"
+                  text-color="white"
+                  icon="fas fa-database"
+                  @click="$q.notify(control.completion_sql)">
+                  Completion SQL
                 </q-chip>
                 <q-chip clickable v-if="control.need_prerun_hook === 'Y'" size="sm" color="indigo-4" text-color="white" icon="fas fa-bolt"> Pre HOOK </q-chip>
                 <q-chip clickable v-if="control.need_postrun_hook != 'Y'" size="sm" color="red-4" text-color="white" icon="fas fa-bolt">
                   Post HOOK inactive</q-chip
                 >
                 <q-chip clickable v-if="control.status !== 'Y'" size="sm" color="red-4" text-color="white" icon="fas fa-clock"> Scheduler inactive </q-chip>
+                <q-chip
+                  clickable
+                  v-if="control.iteration_config && JSON.parse(control.iteration_config).length > 0"
+                  size="sm"
+                  color="indigo-4"
+                  text-color="white"
+                  icon="fas fa-history"
+                  @click="$q.notify(control.iteration_config)">
+                  + {{ JSON.parse(control.iteration_config).length }} Iterations
+                </q-chip>
               </div>
             </td>
 

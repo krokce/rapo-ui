@@ -229,8 +229,7 @@ export default {
   emits: ["update:modelValue"],
   data() {
     return {
-      schedule: this.modelValue,
-      scheduleObject: {},
+      scheduleObject: this.modelValue,
       scheduleType: null,
       scheduleTimepicker: null,
 
@@ -345,19 +344,41 @@ export default {
     },
   },
   watch: {
-    schedule(newValue) {
+    scheduleObject(newValue) {
+      console.log("scheduleObject", newValue);
       this.$emit("update:modelValue", newValue);
     },
     modelValue(newValue) {
       // this.schedule = newValue;
-      this.scheduleObject = this.toScheduleObject(newValue);
+      this.scheduleObject = newValue;
     },
-    scheduleObject: {
-      deep: true,
-      handler(newValue) {
-        this.schedule = this.toScheduleString(newValue);
-      },
-    },
+  },
+  mounted() {
+    var scheduleObjectString = JSON.stringify(this.modelValue);
+    
+    // Determine schedule type
+    if (!this.scheduleType) {
+      if (scheduleObjectString.indexOf("/") > -1 ||
+        scheduleObjectString.indexOf("-") > -1 ||
+        (String(this.modelValue.mday).indexOf(",") > -1 && String(this.modelValue.wday).indexOf(",") > -1) ||
+        (String(this.modelValue.hour) + String(this.modelValue.min) + String(this.modelValue.sec)).indexOf(",") > -1
+      ) {
+        this.scheduleType = "X";
+      } else if (this.modelValue.mday) {
+        this.scheduleType = "M";
+      } else if (this.modelValue.wday) {
+        this.scheduleType = "W";
+      } else {
+        this.scheduleType = "D";
+      }
+    }
+
+    this.scheduleTimepicker =
+      String(this.scheduleObject.hour).padStart(2, "0") +
+      ":" +
+      String(this.scheduleObject.min).padStart(2, "0") +
+      ":" +
+      String(this.scheduleObject.sec).padStart(2, "0");
   },
 };
 </script>
