@@ -656,6 +656,7 @@ export default {
       ruleErrorObject: null,
       caseConfigObject: [],
       iterationConfigObject: [],
+      controlLogs: [],
       $q: useQuasar(),
     };
   },
@@ -708,6 +709,10 @@ export default {
         });
     },
     async getDatasourceColumns(datasource_name, which) {
+      if (!datasource_name) {
+        return [];
+      }
+
       const response = await fetch("/api/get-datasource-columns?datasource_name=" + datasource_name, {
         method: "GET",
         headers: {
@@ -725,6 +730,7 @@ export default {
           ret = data.filter((item) => item.data_type === "VARCHAR2" || item.data_type === "VARCHAR").map((item) => item.column_name);
         } else if (which === "date") {
           ret = data.filter((item) => item.data_type === "DATE" || item.data_type === "TIMESTAMP").map((item) => item.column_name);
+          ret.push(null);
         } else {
           ret = data.map((item) => item.column_name);
         }
@@ -807,6 +813,19 @@ export default {
         });
         this.control.label = "ACTUAL";
         this.controlVersions.unshift(this.control);
+      }
+    },
+    async getControlLogs(controlName, numberDays) {
+      const response = await fetch("/api/read-control-logs?control_name=" + controlName + "&days=" + numberDays, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${this.$store.getters.getToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        this.controlLogs = data;
       }
     },
     ReconciliationTimeFromToleranceChanged() {
@@ -1206,41 +1225,34 @@ export default {
   },
   watch: {
     "control.source_name": function (newDatasource, oldDatasource) {
-      this.getDatasourceColumns(newDatasource).then((data) => {
-        this.datasourceColumns = data;
-        // this.control.output_table_columns = data;
-        if (oldDatasource && oldDatasource !== newDatasource) {
+      if (oldDatasource && newDatasource && oldDatasource !== newDatasource) {
+        this.getDatasourceColumns(newDatasource).then((data) => {
+          this.datasourceColumns = data;
+          // this.control.output_table_columns = data;
           this.control.output_table_columns = null;
           // this.control.source_filter = "-- Columns:" + JSON.stringify(data) + "\n";
-        }
-      });
+        });
 
-      this.getDatasourceColumns(newDatasource, "date").then((data) => {
-        this.datasourceDateColumns = data;
-        this.datasourceDateColumns.push(null);
-
-        if (oldDatasource && oldDatasource !== newDatasource) {
+        this.getDatasourceColumns(newDatasource, "date").then((data) => {
+          this.datasourceDateColumns = data;
           this.control.source_date_field = data[0];
           // this.control.source_date_field = null;
-        }
-      });
+        });
+      }
     },
     "control.source_name_a": function (newDatasource, oldDatasource) {
-      this.getDatasourceColumns(newDatasource).then((data) => {
-        this.datasourceAColumns = data;
-        if (oldDatasource && oldDatasource !== newDatasource) {
+      if (oldDatasource && newDatasource && oldDatasource !== newDatasource) {
+        this.getDatasourceColumns(newDatasource).then((data) => {
+          this.datasourceAColumns = data;
           // this.control.source_filter_a = "-- Columns:" + JSON.stringify(data) + "\n";
           this.control.output_table_a_columns = null;
-        }
-      });
+        });
 
-      this.getDatasourceColumns(newDatasource, "date").then((data) => {
-        this.datasourceADateColumns = data;
-        this.datasourceADateColumns.push(null);
-        if (oldDatasource && oldDatasource !== newDatasource) {
+        this.getDatasourceColumns(newDatasource, "date").then((data) => {
+          this.datasourceADateColumns = data;
           this.control.source_date_field_a = data[0];
-        }
-      });
+        });
+      }
 
       this.getDatasourceColumns(newDatasource, "numeric").then((data) => {
         this.datasourceANumColumns = data;
@@ -1248,26 +1260,21 @@ export default {
     },
     "control.source_name_b": function (newDatasource, oldDatasource) {
       // this.control.source_filter_b = "";
-
-      this.getDatasourceColumns(newDatasource).then((data) => {
-        this.datasourceBColumns = data;
-        if (oldDatasource && oldDatasource !== newDatasource) {
+      if (oldDatasource && newDatasource && oldDatasource !== newDatasource) {
+        this.getDatasourceColumns(newDatasource).then((data) => {
+          this.datasourceBColumns = data;
           // this.control.source_filter_b = "-- Columns: " + JSON.stringify(data) + "\n";
-          this.control.output_table_b_columns = null;
-        }
-      });
+        });
 
-      this.getDatasourceColumns(newDatasource, "date").then((data) => {
-        this.datasourceBDateColumns = data;
-        this.datasourceBDateColumns.push(null);
-        if (oldDatasource && oldDatasource !== newDatasource) {
+        this.getDatasourceColumns(newDatasource, "date").then((data) => {
+          this.datasourceBDateColumns = data;
           this.control.source_date_field_b = data[0];
-        }
-      });
+        });
 
-      this.getDatasourceColumns(newDatasource, "numeric").then((data) => {
-        this.datasourceBNumColumns = data;
-      });
+        this.getDatasourceColumns(newDatasource, "numeric").then((data) => {
+          this.datasourceBNumColumns = data;
+        });
+      }
     },
   },
   mounted() {
@@ -1278,6 +1285,7 @@ export default {
     if (controlData) {
       this.control = controlData;
       this.getControlVersions(this.controlId);
+      // this.getControlLogs(this.control.control_name, 14);
 
       this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
 
