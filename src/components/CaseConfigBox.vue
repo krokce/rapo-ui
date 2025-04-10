@@ -47,11 +47,9 @@ export default {
   },
   watch: {
     caseConfigObject(newValue) {
-      console.log("ruleConfig", newValue);
       this.$emit("update:modelValue", newValue);
     },
     modelValue(newValue) {
-      console.log("modelValue", newValue);
       this.caseConfigObject = newValue;
     },
   },

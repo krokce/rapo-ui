@@ -345,7 +345,6 @@ export default {
   },
   watch: {
     scheduleObject(newValue) {
-      console.log("scheduleObject", newValue);
       this.$emit("update:modelValue", newValue);
     },
     modelValue(newValue) {

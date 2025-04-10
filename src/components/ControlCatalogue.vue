@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <h1>{{ filteredControlCatalogueLen }} Control<span v-if="filteredControlCatalogueLen != 1">s</span></h1>
+    <h2 class="row">{{ filteredControlCatalogueLen }} Control<span v-if="filteredControlCatalogueLen != 1">s</span></h2>
 
     <q-btn class="q-my-lg" size="lg" color="primary" icon="fas fa-plus" label="New control" :to="{ name: 'edit-control', params: { controlId: 'new' } }" />
 
@@ -111,7 +111,7 @@
                   text-color="white"
                   icon="fas fa-history"
                   @click="$q.notify(control.iteration_config)">
-                  + {{ JSON.parse(control.iteration_config).length }} Iterations
+                  +{{ JSON.parse(control.iteration_config).length }} Iteration{{ (JSON.parse(control.iteration_config).length > 1) ? 's' : '' }}
                 </q-chip>
               </div>
             </td>

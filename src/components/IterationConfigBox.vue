@@ -14,7 +14,7 @@
               <q-icon name="fas fa-history" @click.stop.prevent />
             </template>
           </q-input>
-          <q-input class="col-2" v-model.number="iterationConfigObject[index].period_number" type="number" outlined label="For # of periods">
+          <q-input class="col-2" v-model.number="iterationConfigObject[index].period_number" type="number" outlined label="Number of periods">
             <template v-slot:prepend>
               <q-icon name="fas fa-calendar-day" @click.stop.prevent />
             </template>
@@ -26,9 +26,9 @@
             map-options
             v-model="iterationConfigObject[index].period_type"
             :options="[
-              { label: 'Days', value: 'D' },
-              { label: 'Weeks', value: 'W' },
-              { label: 'Months', value: 'M' },
+              { label: 'Day', value: 'D' },
+              { label: 'Week', value: 'W' },
+              { label: 'Month', value: 'M' },
             ]"
             label="Period type" />
           <q-select
@@ -86,11 +86,9 @@ export default {
   },
   watch: {
     iterationConfigObject(newValue) {
-      console.log("ruleConfig", newValue);
       this.$emit("update:modelValue", newValue);
     },
     modelValue(newValue) {
-      console.log("modelValue", newValue);
       this.iterationConfigObject = newValue;
     },
   },

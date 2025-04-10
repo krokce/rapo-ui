@@ -18,8 +18,6 @@
         {{ control.control_name ? control.control_name : "New control" }}
       </h2>
 
-      {{ this.iterationConfigObject }}
-
       <q-card>
         <q-tabs
           v-model="tab"
@@ -521,8 +519,19 @@
 
                   <schedule-edit-box class="col" v-model="scheduleObject"></schedule-edit-box>
                 </div>
-
                 <div class="row q-gutter-md">
+                  <q-input outlined class="col-2" v-model.number="control.period_back" type="number" label="Periods back">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-history" @click.stop.prevent />
+                    </template>
+                  </q-input>
+
+                  <q-input class="col-2" v-model.number="control.period_number" type="number" outlined label="Number of periods">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-calendar-day" @click.stop.prevent />
+                    </template>
+                  </q-input>
+
                   <q-select
                     class="col-2"
                     outlined
@@ -530,23 +539,11 @@
                     map-options
                     v-model="control.period_type"
                     :options="[
-                      { label: 'Days', value: 'D' },
-                      { label: 'Weeks', value: 'W' },
-                      { label: 'Months', value: 'M' },
+                      { label: 'Day', value: 'D' },
+                      { label: 'Week', value: 'W' },
+                      { label: 'Month', value: 'M' },
                     ]"
                     label="Period type" />
-
-                  <q-input outlined class="col-2" v-model.number="control.period_back" type="number" label="Periods back">
-                    <template v-slot:prepend>
-                      <q-icon name="fas fa-history" @click.stop.prevent />
-                    </template>
-                  </q-input>
-
-                  <q-input class="col-2" v-model.number="control.period_number" type="number" outlined label="For # of periods">
-                    <template v-slot:prepend>
-                      <q-icon name="fas fa-calendar-day" @click.stop.prevent />
-                    </template>
-                  </q-input>
                 </div>
 
                 <div class="row q-gutter-md">
@@ -777,34 +774,57 @@ export default {
     controlVersionChanged() {
       this.control = this.controlVersion;
 
-      this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
-
       try {
         if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
-          this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
+          if (this.control["output_table"]) {
+            this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
+          }
+
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
           this.getDatasourceColumns(this.control.source_name, "date").then((data) => (this.datasourceDateColumns = data));
         } else {
-          this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
+          if (this.control["output_table_a"]) {
+            this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
+          }
+
           this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
           this.getDatasourceColumns(this.control.source_name_a, "date").then((data) => (this.datasourceADateColumns = data));
           this.getDatasourceColumns(this.control.source_name_a, "numeric").then((data) => (this.datasourceANumColumns = data));
-          this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
+
+          if (this.control["output_table_b"]) {
+            this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
+          }
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
           this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
           this.getDatasourceColumns(this.control.source_name_b, "numeric").then((data) => (this.datasourceBNumColumns = data));
         }
+
+        this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
+
+        if (this.control.rule_config) {
+          this.ruleConfigObject = JSON.parse(this.control.rule_config);
+        }
+        else {
+          this.ruleConfigObject = {};
+        }
+        
+        if (this.control.case_config) {
+          this.caseConfigObject = JSON.parse(this.control.case_config);
+        }
+        else {
+          this.caseConfigObject = [];
+        }
+
+        if (this.control.iteration_config) {
+          this.iterationConfigObject = JSON.parse(this.control.iteration_config);
+        }
+        else {
+          this.iterationConfigObject = [];
+        }
+
       } catch (err) {
         console.log(err);
       }
-
-      if (this.control.rule_config) {
-        this.ruleConfigObject = JSON.parse(this.control.rule_config);
-      }
-      if (this.control.case_config) {
-        this.caseConfigObject = JSON.parse(this.control.case_config);
-      }
-      this.withDeleteionDrop = this.control.with_drop === "Y" ? "drop" : this.control.with_deletion === "Y" ? "deletion" : "N";
     },
     deletionDropChanged() {
       if (this.withDeleteionDrop === "N") {
@@ -882,7 +902,7 @@ export default {
       }
 
       return ret;
-    },    
+    },
     save() {
       // Add new line if last line contains a comment to avoid RAPO SQL builder issue
       this.control.source_filter = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.source_filter);
@@ -937,6 +957,21 @@ export default {
 
       // Set key columns to 'TAG' if they are not set
       if (this.control.control_type === "REC") {
+        // if ruleConfigObject sets need_issues_a or need_issues_b to true, then set need_and need_b to 'Y'
+        if (this.ruleConfigObject.need_issues_a || this.ruleConfigObject.need_recons_a) {
+          this.control.need_a = "Y";
+        }
+        else {
+          this.control.need_a = "N";
+        }
+
+        if (this.ruleConfigObject.need_issues_b || this.ruleConfigObject.need_recons_b) {
+          this.control.need_b = "Y";
+        }
+        else {
+          this.control.need_b = "N";
+        }
+
         if (!this.control.source_key_field_a) {
           this.control.source_key_field_a = "TAG";
         }
@@ -1061,10 +1096,6 @@ export default {
   },
   watch: {
     "control.source_name": function (newDatasource, oldDatasource) {
-      console.log("Datasource changed from", oldDatasource, "to", newDatasource);
-
-      // this.control.source_filter = "";
-
       this.getDatasourceColumns(newDatasource).then((data) => {
         this.datasourceColumns = data;
         // this.control.output_table_columns = data;
@@ -1085,11 +1116,6 @@ export default {
       });
     },
     "control.source_name_a": function (newDatasource, oldDatasource) {
-      console.log("Datasource changed from", oldDatasource, "to", newDatasource);
-      // Call the datasourceChanged method with the new value
-
-      // this.control.source_filter_a = "";
-
       this.getDatasourceColumns(newDatasource).then((data) => {
         this.datasourceAColumns = data;
         if (oldDatasource && oldDatasource !== newDatasource) {
@@ -1108,8 +1134,6 @@ export default {
       });
     },
     "control.source_name_b": function (newDatasource, oldDatasource) {
-      console.log("Datasource changed from", oldDatasource, "to", newDatasource);
-
       // this.control.source_filter_b = "";
 
       this.getDatasourceColumns(newDatasource).then((data) => {
@@ -1205,7 +1229,6 @@ export default {
         output_limit: 0,
       };
     }
-
   },
 };
 </script>

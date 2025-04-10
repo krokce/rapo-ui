@@ -125,11 +125,9 @@ export default {
   },
   watch: {
     ruleConfigObject(newValue) {
-      console.log("ruleConfig", newValue);
       this.$emit("update:modelValue", newValue);
     },
     modelValue(newValue) {
-      console.log("modelValue", newValue);
       this.ruleConfigObject = newValue;
     },
   },
