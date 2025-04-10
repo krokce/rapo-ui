@@ -39,6 +39,7 @@
           <q-tab name="sql" label="SQL" icon="fas fa-code" />
           <q-tab v-if="control.control_type !== 'REP' && control.control_type !== 'REC'" name="case" label="Case config" icon="fas fa-tag" />
           <q-tab name="scheduler" label="Scheduler" icon="fas fa-clock" />
+          <q-tab v-if="control.control_id" name="log" label="Last run logs" icon="fas fa-file-medical-alt" />
         </q-tabs>
 
         <q-separator />
@@ -588,6 +589,13 @@
                 </div>
               </div>
             </q-tab-panel>
+            <q-tab-panel name="log">
+              <!-- Use <pre> to preserve formatting -->
+              <pre class="bg-grey-2 q-pa-sm" style="overflow: auto">
+                      {{ formattedJSON }}
+                  </pre
+              >
+            </q-tab-panel>
           </q-tab-panels>
         </q-form>
       </q-card>
@@ -662,6 +670,9 @@ export default {
   },
   computed: {
     ...mapGetters(["controlCatalogueById"]),
+    formattedJSON() {
+      return JSON.stringify(this.controlLogs, null, 2);
+    },
   },
   methods: {
     filterDatasourceList(val, update, abort) {
@@ -1285,7 +1296,7 @@ export default {
     if (controlData) {
       this.control = controlData;
       this.getControlVersions(this.controlId);
-      // this.getControlLogs(this.control.control_name, 14);
+      this.getControlLogs(this.control.control_name, 7);
 
       this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
 
