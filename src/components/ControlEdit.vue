@@ -736,11 +736,13 @@ export default {
         var ret;
         // data is array of objects {column_name, data_type}. Create an array containing only the columns from type `which`: NUMBER, VARCHAR2, DATE
         if (which === "numeric") {
-          ret = data.filter((item) => item.data_type === "NUMBER").map((item) => item.column_name);
+          ret = data.filter((item) => item.data_type.toUpperCase().includes("NUMBER")).map((item) => item.column_name);
         } else if (which === "string") {
-          ret = data.filter((item) => item.data_type === "VARCHAR2" || item.data_type === "VARCHAR").map((item) => item.column_name);
+          ret = data.filter((item) => item.data_type.toUpperCase().includes("CHAR")).map((item) => item.column_name);
         } else if (which === "date") {
-          ret = data.filter((item) => item.data_type === "DATE" || item.data_type === "TIMESTAMP").map((item) => item.column_name);
+          ret = data
+            .filter((item) => item.data_type.toUpperCase().includes("TIMESTAMP") || item.data_type.toUpperCase() === "DATE")
+            .map((item) => item.column_name);
           ret.push(null);
         } else {
           ret = data.map((item) => item.column_name);
