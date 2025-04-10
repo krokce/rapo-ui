@@ -308,53 +308,67 @@
                     </template>
                   </q-select>
 
-                  <q-icon v-if="control.control_type === 'REC'" class="q-py-md" name="fas fa-circle" size="15px" color="blue-grey-3" />
+                  <q-icon
+                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
+                    class="q-py-md"
+                    name="fas fa-circle"
+                    size="15px"
+                    color="blue-grey-3" />
 
                   <q-input
-                    v-if="control.control_type === 'REC'"
+                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
                     outlined
                     class="col"
                     v-model.number="ruleConfigObject.time_tolerance_from"
                     type="number"
-                    label="Time tolerance from">
+                    label="Time tolerance from"
+                    @update:model-value="ReconciliationTimeFromToleranceChanged">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-long-arrow-alt-left" @click.stop.prevent />
                     </template>
                   </q-input>
 
                   <q-input
-                    v-if="control.control_type === 'REC'"
+                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
                     outlined
                     class="col"
                     v-model.number="ruleConfigObject.time_tolerance_to"
                     type="number"
-                    label="Time tolerance to">
+                    label="Time tolerance to"
+                    @update:model-value="ReconciliationTimeToToleranceChanged">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-long-arrow-alt-right" @click.stop.prevent />
                     </template>
                   </q-input>
 
-                  <q-icon v-if="control.control_type === 'REC'" class="q-py-md" name="fas fa-circle" size="15px" color="blue-grey-3" />
+                  <q-icon
+                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
+                    class="q-py-md"
+                    name="fas fa-circle"
+                    size="15px"
+                    color="blue-grey-3" />
 
                   <q-input
-                    v-if="control.control_type === 'REC'"
+                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
                     outlined
                     class="col"
                     v-model.number="ruleConfigObject.time_shift_from"
                     type="number"
-                    label="Time shift from">
+                    label="Time shift from"
+                    @update:model-value="ReconciliationTimeShiftFromChanged">
                     <template v-slot:prepend>
                       <q-icon name="far fa-clock" @click.stop.prevent />
                     </template>
                   </q-input>
 
                   <q-input
-                    v-if="control.control_type === 'REC'"
+                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
                     outlined
                     class="col"
                     v-model.number="ruleConfigObject.time_shift_to"
                     type="number"
-                    label="Time shift to">
+                    label="Time shift to"
+                    @update:model-value="ReconciliationTimeShiftToChanged">
                     <template v-slot:prepend>
                       <q-icon name="far fa-clock" @click.stop.prevent />
                     </template>
@@ -423,12 +437,30 @@
                   </div>
                 </div>
 
-                <div class="row q-my-xs q-gutter-md">
-                  <div class="col" v-if="control.control_type == 'CMP'">
-                    <code-box label="Match criteria (Rule config)" v-model="control.rule_config"> </code-box>
-                  </div>
-                  <div class="col" v-if="control.control_type !== 'REC' && control.control_type !== 'REP'">
+                <div class="row q-my-xs q-gutter-md" v-if="control.control_type == 'ANL'">
+                  <div class="col">
                     <code-box label="Mismatch criteria (Error definition)" v-model="control.error_definition"> </code-box>
+                  </div>
+                </div>
+
+                <div class="row q-my-xs q-gutter-md" v-if="control.control_type == 'CMP'">
+                  <div class="col">
+                    <!-- <code-box label="Match criteria (Rule config)" v-model="control.rule_config"> </code-box> -->
+                    <comparison-match-criteria-box
+                      class="col"
+                      v-model="this.ruleConfigObject"
+                      :datasource-a-columns="this.datasourceAColumns"
+                      :datasource-b-columns="this.datasourceBColumns">
+                    </comparison-match-criteria-box>
+                  </div>
+                  <div class="col">
+                    <!-- <code-box label="Mismatch criteria (Error definition)" v-model="control.error_definition"> </code-box> -->
+                    <comparison-mis-match-criteria-box
+                      class="col"
+                      v-model="this.ruleErrorObject"
+                      :datasource-a-columns="this.datasourceAColumns"
+                      :datasource-b-columns="this.datasourceBColumns">
+                    </comparison-mis-match-criteria-box>
                   </div>
                 </div>
 
@@ -574,6 +606,8 @@ import ReconciliationMatchCriteriaBox from "./ReconciliationMatchCriteriaBox.vue
 import ReconciliationMisMatchCriteriaBox from "./ReconciliationMisMatchCriteriaBox.vue";
 import CaseConfigBox from "./CaseConfigBox.vue";
 import IterationConfigBox from "./IterationConfigBox.vue";
+import ComparisonMatchCriteriaBox from "./ComparisonMatchCriteriaBox.vue";
+import ComparisonMisMatchCriteriaBox from "./ComparisonMisMatchCriteriaBox.vue";
 
 export default {
   components: {
@@ -583,6 +617,8 @@ export default {
     ReconciliationMisMatchCriteriaBox,
     CaseConfigBox,
     IterationConfigBox,
+    ComparisonMatchCriteriaBox,
+    ComparisonMisMatchCriteriaBox,
   },
   props: {
     controlId: {
@@ -617,6 +653,7 @@ export default {
         sec: "0",
       },
       ruleConfigObject: {},
+      ruleErrorObject: null,
       caseConfigObject: [],
       iterationConfigObject: [],
       $q: useQuasar(),
@@ -746,7 +783,8 @@ export default {
         this.control.source_key_field_a = "TAG";
         this.control.source_key_field_b = "TAG";
       } else if (newValue === "CMP") {
-        this.ruleConfigObject = {};
+        this.ruleConfigObject = [];
+        this.ruleErrorObject = [];
       } else if (newValue === "REP") {
         this.ruleConfigObject = {};
       } else if (newValue === "ANL") {
@@ -769,6 +807,46 @@ export default {
         });
         this.control.label = "ACTUAL";
         this.controlVersions.unshift(this.control);
+      }
+    },
+    ReconciliationTimeFromToleranceChanged() {
+      if (!isNaN(Number(this.ruleConfigObject.time_tolerance_from))) {
+        if (Number(this.ruleConfigObject.time_tolerance_from) < Number(this.ruleConfigObject.time_shift_from)) {
+          this.ruleConfigObject.time_shift_from = this.ruleConfigObject.time_tolerance_from;
+        }
+        if (Number(this.ruleConfigObject.time_tolerance_from) > Number(this.ruleConfigObject.time_tolerance_to)) {
+          this.ruleConfigObject.time_tolerance_to = this.ruleConfigObject.time_tolerance_from;
+        }
+      }
+    },
+    ReconciliationTimeToToleranceChanged() {
+      if (!isNaN(Number(this.ruleConfigObject.time_tolerance_to))) {
+        if (Number(this.ruleConfigObject.time_tolerance_to) > Number(this.ruleConfigObject.time_shift_to)) {
+          this.ruleConfigObject.time_shift_to = this.ruleConfigObject.time_tolerance_to;
+        }
+        if (Number(this.ruleConfigObject.time_tolerance_from) > Number(this.ruleConfigObject.time_tolerance_to)) {
+          this.ruleConfigObject.time_tolerance_from = this.ruleConfigObject.time_tolerance_to;
+        }
+      }
+    },
+    ReconciliationTimeShiftFromChanged() {
+      if (!isNaN(Number(this.ruleConfigObject.time_shift_from))) {
+        if (Number(this.ruleConfigObject.time_shift_from) > Number(this.ruleConfigObject.time_tolerance_from)) {
+          this.ruleConfigObject.time_tolerance_from = this.ruleConfigObject.time_shift_from;
+        }
+        if (Number(this.ruleConfigObject.time_shift_from) > Number(this.ruleConfigObject.time_shift_to)) {
+          this.ruleConfigObject.time_shift_to = this.ruleConfigObject.time_shift_from;
+        }
+      }
+    },
+    ReconciliationTimeShiftToChanged() {
+      if (!isNaN(Number(this.ruleConfigObject.time_shift_to))) {
+        if (Number(this.ruleConfigObject.time_shift_to) < Number(this.ruleConfigObject.time_tolerance_to)) {
+          this.ruleConfigObject.time_tolerance_to = this.ruleConfigObject.time_shift_to;
+        }
+        if (Number(this.ruleConfigObject.time_shift_from) > Number(this.ruleConfigObject.time_shift_to)) {
+          this.ruleConfigObject.time_shift_from = this.ruleConfigObject.time_shift_to;
+        }
       }
     },
     controlVersionChanged() {
@@ -803,25 +881,21 @@ export default {
 
         if (this.control.rule_config) {
           this.ruleConfigObject = JSON.parse(this.control.rule_config);
-        }
-        else {
+        } else {
           this.ruleConfigObject = {};
         }
-        
+
         if (this.control.case_config) {
           this.caseConfigObject = JSON.parse(this.control.case_config);
-        }
-        else {
+        } else {
           this.caseConfigObject = [];
         }
 
         if (this.control.iteration_config) {
           this.iterationConfigObject = JSON.parse(this.control.iteration_config);
-        }
-        else {
+        } else {
           this.iterationConfigObject = [];
         }
-
       } catch (err) {
         console.log(err);
       }
@@ -916,7 +990,8 @@ export default {
       // this.control.case_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.case_config);
 
       // Stringify the JSON obejcts holding the columns values
-      if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
+      // ANL rule
+      if (this.control.control_type === "ANL") {
         if (!this.control.output_table_columns) {
           this.control.output_table = null;
         } else {
@@ -924,7 +999,27 @@ export default {
             columns: this.control.output_table_columns,
           });
         }
-      } else {
+
+        if (this.caseConfigObject.length > 0) {
+          this.control.case_config = JSON.stringify(this.caseConfigObject);
+        } else {
+          this.control.case_config = null;
+        }
+      }
+
+      // REP rule
+      if (this.control.control_type === "REP") {
+        if (!this.control.output_table_columns) {
+          this.control.output_table = null;
+        } else {
+          this.control.output_table = JSON.stringify({
+            columns: this.control.output_table_columns,
+          });
+        }
+      }
+
+      // REC rule
+      if (this.control.control_type === "REC") {
         if (!this.control.output_table_a_columns) {
           this.control.output_table_a = null;
         } else {
@@ -940,35 +1035,16 @@ export default {
             columns: this.control.output_table_b_columns,
           });
         }
-        this.control.rule_config = JSON.stringify(this.ruleConfigObject);
-      }
 
-      if (this.caseConfigObject.length > 0) {
-        this.control.case_config = JSON.stringify(this.caseConfigObject);
-      } else {
-        this.control.case_config = null;
-      }
-
-      if (this.iterationConfigObject.length > 0) {
-        this.control.iteration_config = JSON.stringify(this.iterationConfigObject);
-      } else {
-        this.control.iteration_config = null;
-      }
-
-      // Set key columns to 'TAG' if they are not set
-      if (this.control.control_type === "REC") {
-        // if ruleConfigObject sets need_issues_a or need_issues_b to true, then set need_and need_b to 'Y'
         if (this.ruleConfigObject.need_issues_a || this.ruleConfigObject.need_recons_a) {
           this.control.need_a = "Y";
-        }
-        else {
+        } else {
           this.control.need_a = "N";
         }
 
         if (this.ruleConfigObject.need_issues_b || this.ruleConfigObject.need_recons_b) {
           this.control.need_b = "Y";
-        }
-        else {
+        } else {
           this.control.need_b = "N";
         }
 
@@ -978,10 +1054,28 @@ export default {
         if (!this.control.source_key_field_b) {
           this.control.source_key_field_b = "TAG";
         }
+
+        this.control.rule_config = JSON.stringify(this.ruleConfigObject);
       }
 
+      // CMP rule
       if (this.control.control_type === "CMP") {
-        // Combine OUTPUT from the A and B fields
+        if (!this.control.output_table_a_columns) {
+          this.control.output_table_a = null;
+        } else {
+          this.control.output_table_a = JSON.stringify({
+            columns: this.control.output_table_a_columns,
+          });
+        }
+
+        if (!this.control.output_table_b_columns) {
+          this.control.output_table_b = null;
+        } else {
+          this.control.output_table_b = JSON.stringify({
+            columns: this.control.output_table_b_columns,
+          });
+        }
+
         this.control.output_table = [];
         if (this.control.output_table_a_columns) {
           for (const out_field of this.control.output_table_a_columns) {
@@ -998,6 +1092,22 @@ export default {
         this.control.output_table = JSON.stringify({
           columns: this.control.output_table,
         });
+
+        this.control.error_definition = JSON.stringify(this.ruleErrorObject);
+
+        this.control.rule_config = JSON.stringify(this.ruleConfigObject);
+
+        if (this.caseConfigObject.length > 0) {
+          this.control.case_config = JSON.stringify(this.caseConfigObject);
+        } else {
+          this.control.case_config = null;
+        }
+      }
+
+      if (this.iterationConfigObject.length > 0) {
+        this.control.iteration_config = JSON.stringify(this.iterationConfigObject);
+      } else {
+        this.control.iteration_config = null;
       }
 
       fetch("/api/save-control", {
@@ -1056,7 +1166,7 @@ export default {
             message: "Please select a data source for both A and B.",
           });
           errorTab = "data";
-        } else if (!this.control.source_date_field_a || !this.control.source_date_field_b) {
+        } else if (this.control.control_type === "REC" && (!this.control.source_date_field_a || !this.control.source_date_field_b)) {
           this.$q.notify({
             type: "negative",
             message: "Please select a date columns for both A and B datasources.",
@@ -1126,7 +1236,10 @@ export default {
 
       this.getDatasourceColumns(newDatasource, "date").then((data) => {
         this.datasourceADateColumns = data;
-        this.control.source_date_field_a = data[0];
+        this.datasourceADateColumns.push(null);
+        if (oldDatasource && oldDatasource !== newDatasource) {
+          this.control.source_date_field_a = data[0];
+        }
       });
 
       this.getDatasourceColumns(newDatasource, "numeric").then((data) => {
@@ -1146,7 +1259,10 @@ export default {
 
       this.getDatasourceColumns(newDatasource, "date").then((data) => {
         this.datasourceBDateColumns = data;
-        this.control.source_date_field_b = data[0];
+        this.datasourceBDateColumns.push(null);
+        if (oldDatasource && oldDatasource !== newDatasource) {
+          this.control.source_date_field_b = data[0];
+        }
       });
 
       this.getDatasourceColumns(newDatasource, "numeric").then((data) => {
@@ -1196,7 +1312,36 @@ export default {
 
         if (this.control.rule_config) {
           this.ruleConfigObject = JSON.parse(this.control.rule_config);
+        } else {
+          if (this.control.control_type === "REC") {
+            this.ruleConfigObject = {
+              need_issues_a: true,
+              need_issues_b: true,
+              need_recons_a: false,
+              need_recons_b: false,
+              allow_duplicates: false,
+              time_shift_from: 0,
+              time_shift_to: 0,
+              time_tolerance_from: 0,
+              time_tolerance_to: 0,
+              correlation_config: [],
+              discrepancy_config: [],
+            };
+          } else if (this.control.control_type === "CMP") {
+            this.ruleConfigObject = [];
+          } else if (this.control.control_type === "REP") {
+            this.ruleConfigObject = null;
+          } else if (this.control.control_type === "ANL") {
+            this.ruleConfigObject = null;
+          } else {
+            this.ruleConfigObject = null;
+          }
         }
+
+        if (this.control.error_definition && this.control.control_type == "CMP") {
+          this.ruleErrorObject = JSON.parse(this.control.error_definition);
+        }
+
         if (this.control.case_config) {
           this.caseConfigObject = JSON.parse(this.control.case_config);
         }
