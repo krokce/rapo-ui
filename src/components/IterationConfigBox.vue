@@ -60,7 +60,7 @@
 
 <script>
 export default {
-  props: ["modelValue"],
+  props: ["modelValue", "pb"],
   emits: ["update:modelValue"],
   data() {
     return {
@@ -74,7 +74,7 @@ export default {
       this.iterationConfigObject.push({
         iteration_id: id,
         iteration_description: "Iteration #" + id,
-        period_back: 2+id,
+        period_back: Number(this.pb)+id,
         period_number: 1,
         period_type: "D",
         status: "Y",

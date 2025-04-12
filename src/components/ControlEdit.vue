@@ -39,7 +39,7 @@
           <q-tab name="sql" label="SQL" icon="fas fa-code" />
           <q-tab v-if="control.control_type !== 'REP' && control.control_type !== 'REC'" name="case" label="Case config" icon="fas fa-tag" />
           <q-tab name="scheduler" label="Scheduler" icon="fas fa-clock" />
-          <q-tab v-if="control.control_id" name="log" label="Last run logs" icon="fas fa-file-medical-alt" />
+          <q-tab v-if="control.control_id" name="log" label="Last runs" icon="fas fa-file-medical-alt" />
         </q-tabs>
 
         <q-separator />
@@ -142,7 +142,16 @@
                 </div>
 
                 <div class="row q-my-md q-gutter-md">
-                  <q-input class="col" v-model.number="control.parallelism" type="number" outlined label="Parallelism">
+                  <q-input
+                    class="col"
+                    v-model.number="control.parallelism"
+                    type="number"
+                    outlined
+                    label="Parallelism"
+                    :min="1"
+                    :max="4"
+                    :step="1"
+                    @update:model-value="updateParallelism">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-microchip" @click.stop.prevent />
                     </template>
@@ -174,8 +183,8 @@
                     v-model="withDeleteionDrop"
                     :options="[
                       { label: 'Yes', value: 'N' },
-                      { label: 'No, delete results table on each run', value: 'deletion' },
-                      { label: 'No, drop results table on each run', value: 'drop' },
+                      { label: 'No, delete on each run', value: 'deletion' },
+                      { label: 'No, drop on each run', value: 'drop' },
                     ]"
                     label="Keep past results"
                     @update:model-value="deletionDropChanged" />
@@ -231,6 +240,7 @@
                     v-model="control.source_date_field"
                     label="Date column"
                     :options="datasourceDateColumns"
+                    clearable
                     behavior="menu">
                     <template v-slot:prepend>
                       <q-icon name="far fa-calendar-alt" @click.stop.prevent />
@@ -240,7 +250,7 @@
 
                 <div class="row q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
                   <q-select
-                    class="col"
+                    :class="(control.control_type === 'REC' ? ' col-4' : 'col')"
                     outlined
                     v-model="control.source_name_a"
                     use-input
@@ -261,7 +271,17 @@
                   </q-select>
 
                   <q-select
+                    v-if="control.control_type === 'REC'"
                     class="col"
+                    outlined
+                    v-model="control.source_key_field_a"
+                    input-debounce="0"
+                    label="Key field A (TAG)"
+                    :options="[...new Set([...(datasourceAColumns ? datasourceAColumns : []), 'TAG'])]">
+                  </q-select>
+
+                  <q-select
+                    :class="(control.control_type === 'REC' ? ' col-4' : 'col')"
                     outlined
                     v-model="control.source_name_b"
                     use-input
@@ -280,101 +300,119 @@
                       </q-item>
                     </template>
                   </q-select>
-                </div>
-
-                <div class="row q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
-                  <q-select
-                    class="col-2"
-                    outlined
-                    v-model="control.source_date_field_a"
-                    label="Date column A"
-                    :options="datasourceADateColumns"
-                    behavior="menu">
-                    <template v-slot:prepend>
-                      <q-icon name="far fa-calendar-alt" @click.stop.prevent />
-                    </template>
-                  </q-select>
-
-                  <q-icon class="q-py-md" name="fas fa-equals" size="20px" color="blue-grey-3" />
 
                   <q-select
-                    class="col-2"
+                    v-if="control.control_type === 'REC'"
+                    class="col"
                     outlined
-                    v-model="control.source_date_field_b"
-                    label="Date column B"
-                    :options="datasourceBDateColumns"
-                    behavior="menu">
-                    <template v-slot:prepend>
-                      <q-icon name="far fa-calendar-alt" @click.stop.prevent />
-                    </template>
+                    v-model="control.source_key_field_b"
+                    input-debounce="0"
+                    label="Key field B (TAG)"
+                    :options="[...new Set([...(datasourceBColumns ? datasourceBColumns : []), 'TAG'])]">
                   </q-select>
-
-                  <q-icon
-                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
-                    class="q-py-md"
-                    name="fas fa-circle"
-                    size="15px"
-                    color="blue-grey-3" />
-
-                  <q-input
-                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
-                    outlined
-                    class="col"
-                    v-model.number="ruleConfigObject.time_tolerance_from"
-                    type="number"
-                    label="Time tolerance from"
-                    @update:model-value="ReconciliationTimeFromToleranceChanged">
-                    <template v-slot:prepend>
-                      <q-icon name="fas fa-long-arrow-alt-left" @click.stop.prevent />
-                    </template>
-                  </q-input>
-
-                  <q-input
-                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
-                    outlined
-                    class="col"
-                    v-model.number="ruleConfigObject.time_tolerance_to"
-                    type="number"
-                    label="Time tolerance to"
-                    @update:model-value="ReconciliationTimeToToleranceChanged">
-                    <template v-slot:prepend>
-                      <q-icon name="fas fa-long-arrow-alt-right" @click.stop.prevent />
-                    </template>
-                  </q-input>
-
-                  <q-icon
-                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
-                    class="q-py-md"
-                    name="fas fa-circle"
-                    size="15px"
-                    color="blue-grey-3" />
-
-                  <q-input
-                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
-                    outlined
-                    class="col"
-                    v-model.number="ruleConfigObject.time_shift_from"
-                    type="number"
-                    label="Time shift from"
-                    @update:model-value="ReconciliationTimeShiftFromChanged">
-                    <template v-slot:prepend>
-                      <q-icon name="far fa-clock" @click.stop.prevent />
-                    </template>
-                  </q-input>
-
-                  <q-input
-                    v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
-                    outlined
-                    class="col"
-                    v-model.number="ruleConfigObject.time_shift_to"
-                    type="number"
-                    label="Time shift to"
-                    @update:model-value="ReconciliationTimeShiftToChanged">
-                    <template v-slot:prepend>
-                      <q-icon name="far fa-clock" @click.stop.prevent />
-                    </template>
-                  </q-input>
                 </div>
+
+                <q-card class="q-pa-sm" flat bordered v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
+                  <q-item-section class="q-ma-xs">
+                    <q-item-label>Time dimension</q-item-label>
+                  </q-item-section>
+
+                  <q-card-section class="q-gutter-xs">
+                    <div class="row q-gutter-md">
+                      <q-select
+                        class="col-2"
+                        outlined
+                        v-model="control.source_date_field_a"
+                        label="Date column A"
+                        :options="datasourceADateColumns"
+                        behavior="menu">
+                        <template v-slot:prepend>
+                          <q-icon name="far fa-calendar-alt" @click.stop.prevent />
+                        </template>
+                      </q-select>
+
+                      <q-icon class="q-py-md" name="fas fa-equals" size="20px" color="blue-grey-3" />
+
+                      <q-select
+                        class="col-2"
+                        outlined
+                        v-model="control.source_date_field_b"
+                        label="Date column B"
+                        :options="datasourceBDateColumns"
+                        behavior="menu">
+                        <template v-slot:prepend>
+                          <q-icon name="far fa-calendar-alt" @click.stop.prevent />
+                        </template>
+                      </q-select>
+
+                      <q-icon
+                        v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
+                        class="q-py-md"
+                        name="fas fa-circle"
+                        size="15px"
+                        color="blue-grey-3" />
+
+                      <q-input
+                        v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
+                        outlined
+                        class="col"
+                        v-model.number="ruleConfigObject.time_tolerance_from"
+                        type="number"
+                        label="Time tolerance from"
+                        @update:model-value="ReconciliationTimeFromToleranceChanged">
+                        <template v-slot:prepend>
+                          <q-icon name="fas fa-long-arrow-alt-left" @click.stop.prevent />
+                        </template>
+                      </q-input>
+
+                      <q-input
+                        v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
+                        outlined
+                        class="col"
+                        v-model.number="ruleConfigObject.time_tolerance_to"
+                        type="number"
+                        label="Time tolerance to"
+                        @update:model-value="ReconciliationTimeToToleranceChanged">
+                        <template v-slot:prepend>
+                          <q-icon name="fas fa-long-arrow-alt-right" @click.stop.prevent />
+                        </template>
+                      </q-input>
+
+                      <q-icon
+                        v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
+                        class="q-py-md"
+                        name="fas fa-circle"
+                        size="15px"
+                        color="blue-grey-3" />
+
+                      <q-input
+                        v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
+                        outlined
+                        class="col"
+                        v-model.number="ruleConfigObject.time_shift_from"
+                        type="number"
+                        label="Time shift from"
+                        @update:model-value="ReconciliationTimeShiftFromChanged">
+                        <template v-slot:prepend>
+                          <q-icon name="far fa-clock" @click.stop.prevent />
+                        </template>
+                      </q-input>
+
+                      <q-input
+                        v-if="control.control_type === 'REC' && control.source_date_field_a && control.source_date_field_b"
+                        outlined
+                        class="col"
+                        v-model.number="ruleConfigObject.time_shift_to"
+                        type="number"
+                        label="Time shift to"
+                        @update:model-value="ReconciliationTimeShiftToChanged">
+                        <template v-slot:prepend>
+                          <q-icon name="far fa-clock" @click.stop.prevent />
+                        </template>
+                      </q-input>
+                    </div>
+                  </q-card-section>
+                </q-card>
 
                 <div class="row q-gutter-md">
                   <q-select
@@ -580,7 +618,7 @@
                 </div>
 
                 <div class="row q-gutter-md">
-                  <iteration-config-box class="col" v-model="iterationConfigObject"> </iteration-config-box>
+                  <iteration-config-box class="col" v-model="iterationConfigObject" :pb="this.control.period_back"> </iteration-config-box>
                 </div>
 
                 <div class="row q-gutter-md">
@@ -590,11 +628,88 @@
               </div>
             </q-tab-panel>
             <q-tab-panel name="log">
-              <!-- Use <pre> to preserve formatting -->
-              <pre class="bg-grey-2 q-pa-sm" style="overflow: auto">
+              <q-markup-table flat dense>
+                <thead>
+                  <tr class="bg-blue-grey-2">
+                    <th class="text-left">#</th>
+                    <th class="text-left">Added</th>
+                    <th class="text-left">Start</th>
+                    <th class="text-left">End</th>
+                    <th class="text-left">PID</th>
+                    <th class="text-left">Run from</th>
+                    <th class="text-left">Run to</th>
+                    <th class="text-right">Fetched A</th>
+                    <th class="text-right">Fetched B</th>
+                    <th class="text-right">Discr. A</th>
+                    <th class="text-right">Discr. B</th>
+                    <th class="text-right">Err. lvl A [%]</th>
+                    <th class="text-right">Err. lvl B [%]</th>
+                    <th class="text-right">PV</th>
+                    <th class="text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(control_log, index) in controlLogs" :key="control_log.process_id">
+                    <td class="text-left">{{ index + 1 }}. &nbsp;</td>
+                    <td class="text-left">
+                      <strong>{{ toDateTimeString(control_log.added) }}</strong>
+                    </td>
+                    <td class="text-left">
+                      <strong>{{ toDateTimeString(control_log.start_date) }}</strong>
+                    </td>
+                    <td class="text-left">
+                      <strong>{{ toDateTimeString(control_log.end_date) }}</strong>
+                    </td>
+                    <td class="text-left text-weight-bold text-blue-grey-7">
+                      {{ control_log.process_id }}
+                    </td>
+                    <td class="text-left">{{ toDateString(control_log.date_from) }}</td>
+                    <td class="text-left">{{ toDateString(control_log.date_to) }}</td>
+                    <td class="text-right">
+                      <span>
+                        {{ Number(control_log.fetched_number_a).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      {{ Number(control_log.fetched_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                    </td>
+                    <td class="text-right">
+                      <span>
+                        {{ Number(control_log.error_number_a).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <span>
+                        {{ Number(control_log.error_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <span> {{ Number(control_log.error_level_a).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
+                    </td>
+                    <td class="text-right">
+                      <span> {{ Number(control_log.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
+                    </td>
+                    <td class="text-right">{{ control_log.prerequisite_value }}</td>
+                    <td class="text-left" @click="showFullLog(control_log)">
+                      <q-chip class="cursor-pointer">
+                        <q-avatar size="sm" v-if="control_log.status == 'E'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
+                        <q-avatar size="sm" v-if="control_log.status == 'R'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
+                        <q-avatar size="sm" v-if="control_log.status == 'D'" icon="fas fa-check-circle" color="green" text-color="white" />
+                        <q-avatar size="sm" v-if="control_log.status == 'I'" icon="fas fa-play-circle" color="blue" text-color="white" />
+                        <q-avatar size="sm" v-if="control_log.status == 'X'" icon="fas fa-minus-circle" color="grey" text-color="white" />
+                        <q-avatar size="sm" v-if="control_log.status == 'C'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
+                        Full log
+                      </q-chip>
+                    </td>
+                    <td class="text-left"></td>
+                  </tr>
+                </tbody>
+              </q-markup-table>
+
+              <!-- <pre class="bg-grey-2 q-pa-sm" style="overflow: auto">
                       {{ formattedJSON }}
-                  </pre
-              >
+              </pre>
+               -->
             </q-tab-panel>
           </q-tab-panels>
         </q-form>
@@ -670,11 +785,36 @@ export default {
   },
   computed: {
     ...mapGetters(["controlCatalogueById"]),
-    formattedJSON() {
-      return JSON.stringify(this.controlLogs, null, 2);
-    },
   },
   methods: {
+    updateParallelism(value) {
+      this.control.parallelism = Math.min(4, Math.abs(value));
+    },
+    toDateString(val) {
+      var ret = new Date(val).toISOString("de-DE").substring(0, 10);
+      return ret;
+    },
+    toDateTimeString(val) {
+      var ret = new Date(val).toISOString("de-DE").substring(0, 19).replace("T", " ");
+      return ret;
+    },
+    round(val, places) {
+      return Math.round(val * Math.pow(10, places)) / Math.pow(10, places);
+    },
+    showFullLog(control_log) {
+      this.$q.dialog({
+        title: this.control.control_name + " | " + " PID:" + control_log.process_id + " Full log",
+        message: "<pre>" + this.formattedJSON(control_log) + "</pre>",
+        html: true,
+        style: {
+          width: "800px", // Adjust the width as needed
+          maxWidth: "90vw", // Optional: Ensure it doesn't exceed viewport width
+        },
+      });
+    },
+    formattedJSON(control) {
+      return JSON.stringify(control, null, 2);
+    },
     filterDatasourceList(val, update, abort) {
       if (val.length < 0) {
         abort();
@@ -743,7 +883,7 @@ export default {
           ret = data
             .filter((item) => item.data_type.toUpperCase().includes("TIMESTAMP") || item.data_type.toUpperCase() === "DATE")
             .map((item) => item.column_name);
-          ret.push(null);
+          // ret.push(null);
         } else {
           ret = data.map((item) => item.column_name);
         }
@@ -1238,7 +1378,7 @@ export default {
   },
   watch: {
     "control.source_name": function (newDatasource, oldDatasource) {
-      if (oldDatasource && newDatasource && oldDatasource !== newDatasource) {
+      if ((oldDatasource && newDatasource && oldDatasource !== newDatasource) || !this.control.control_id) {
         this.getDatasourceColumns(newDatasource).then((data) => {
           this.datasourceColumns = data;
           // this.control.output_table_columns = data;
@@ -1254,7 +1394,7 @@ export default {
       }
     },
     "control.source_name_a": function (newDatasource, oldDatasource) {
-      if (oldDatasource && newDatasource && oldDatasource !== newDatasource) {
+      if ((oldDatasource && newDatasource && oldDatasource !== newDatasource) || !this.control.control_id) {
         this.getDatasourceColumns(newDatasource).then((data) => {
           this.datasourceAColumns = data;
           // this.control.source_filter_a = "-- Columns:" + JSON.stringify(data) + "\n";
@@ -1273,7 +1413,7 @@ export default {
     },
     "control.source_name_b": function (newDatasource, oldDatasource) {
       // this.control.source_filter_b = "";
-      if (oldDatasource && newDatasource && oldDatasource !== newDatasource) {
+      if ((oldDatasource && newDatasource && oldDatasource !== newDatasource) || !this.control.control_id) {
         this.getDatasourceColumns(newDatasource).then((data) => {
           this.datasourceBColumns = data;
           // this.control.source_filter_b = "-- Columns: " + JSON.stringify(data) + "\n";

@@ -9,8 +9,8 @@
         <div class="row q-gutter-xs items-center" v-for="(item, index) in caseConfigObject" v-bind:key="index">
           <q-input outlined class="col-1" v-model.number="caseConfigObject[index].case_id" type="number" label="Case"/>
           <q-input outlined class="col-3" v-model.number="caseConfigObject[index].case_value" label="Value" />
-          <q-input outlined class="col-3" v-model.number="caseConfigObject[index].case_type" label="Type" />
-          <q-input outlined class="col-3" v-model.number="caseConfigObject[index].case_description" label="Description" />
+          <q-input outlined class="col-2" v-model.number="caseConfigObject[index].case_type" label="Type" />
+          <q-input outlined class="col-4" v-model.number="caseConfigObject[index].case_description" label="Description" />
 
           <q-btn size="sm" color="primary" flat round icon="fas fa-minus" @click="removeCaseConfig(index)" />
           <q-btn v-if="index == caseConfigObject.length - 1" size="sm" color="primary" flat round icon="fas fa-plus" @click="addCaseConfig((index+2))" />
@@ -37,7 +37,7 @@ export default {
       this.caseConfigObject.push({
         case_id: id,
         case_value: null,
-        case_type: null,
+        case_type: 'Error',
         case_description: null,
       });
     },
