@@ -19,7 +19,7 @@
             <th class="text-right">Discr. B</th>
             <th class="text-right">Err. lvl A [%]</th>
             <th class="text-right">Err. lvl B [%]</th>
-            <th class="text-right">Prerequisite</th>
+            <th class="text-right">PV</th>
             <th class="text-left">Status</th>
             <th class="text-left"></th>
           </tr>
@@ -46,12 +46,21 @@
             <td class="text-center" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.duration_minutes, 2) }} min</td>
             <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.process_id }}</td>
             <td class="text-left text-weight-bold text-teal" :class="{ 'new-day-separator': newDaySeparator(index) }">
+              <q-btn
+                v-if="!this.getSearch"
+                size="xs"
+                color="grey-5"
+                round
+                flat
+                icon="fas fa-search"
+                @click.stop="this.getSearch ? updateSearch(null) : updateSearch(control.control_name)" />
               <router-link
                 :to="{
                   name: 'edit-control',
                   params: { controlId: control.control_id },
                 }">
                 <span
+                  class="col cursor-pointer"
                   :class="{
                     'text-pink-8': control.control_type === 'ANL',
                     'text-teal-8': control.control_type === 'REC',
@@ -178,7 +187,7 @@ export default {
     };
   },
   methods: {
-    ...mapActions(["updateControlResults"]),
+    ...mapActions(["updateControlResults", "updateSearch"]),
     newDaySeparator(index) {
       if (index > 0) {
         const prev_date = this.toDateString(this.filteredControlResults[index - 1].start_date);
@@ -302,7 +311,7 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["filteredControlResults"]),
+    ...mapGetters(["filteredControlResults", "getSearch"]),
     filteredControlResultsLen() {
       return this.filteredControlResults.length;
     },
