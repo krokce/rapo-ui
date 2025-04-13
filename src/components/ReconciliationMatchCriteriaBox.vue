@@ -1,10 +1,5 @@
 <template>
   <div class="col q-gutter-y-md">
-    <q-checkbox color="blue" label="Write AnB discrepancies" v-model="ruleConfigObject.need_issues_a" />
-    <q-checkbox color="blue" label="Write BnA discrepancies" v-model="ruleConfigObject.need_issues_b" />
-    <q-checkbox color="blue" label="Write A match" v-model="ruleConfigObject.need_recons_a" />
-    <q-checkbox color="blue" label="Write B match" v-model="ruleConfigObject.need_recons_b" />
-    <q-checkbox color="blue" label="Allow duplicates" v-model="ruleConfigObject.allow_duplicates" />
 
     <q-card class="q-pa-sm" flat bordered>
       <q-item-section class="q-ma-xs">
