@@ -656,6 +656,22 @@
               </div>
             </q-tab-panel>
             <q-tab-panel name="log">
+              <div class="row q-my-lg">
+                <q-input
+                class="col-2"
+                v-model.number="log_days_back"
+                type="number"
+                outlined
+                label="Days back"
+                :min="1"
+                :max="365"
+                :step="1"
+                @update:model-value="updateLogDaysBack">
+                <template v-slot:prepend>
+                  <q-icon name="fas fa-history" @click.stop.prevent />
+                </template>
+              </q-input>
+            </div>
               <q-markup-table flat dense>
                 <thead>
                   <tr class="bg-blue-grey-2">
@@ -729,7 +745,6 @@
                         Full log
                       </q-chip>
                     </td>
-                    <td class="text-left"></td>
                   </tr>
                 </tbody>
               </q-markup-table>
@@ -785,6 +800,7 @@ export default {
       control: {},
       controlVersions: [],
       controlVersion: "ACTUAL",
+      log_days_back: 7,
       datasourceColumns: null,
       datasourceDateColumns: null,
       datasourceAColumns: null,
@@ -819,6 +835,9 @@ export default {
   methods: {
     updateParallelism(value) {
       this.control.parallelism = Math.min(4, Math.abs(value));
+    },
+    updateLogDaysBack(days) {
+      this.getControlLogs(this.control.control_name, days);
     },
     toDateString(val) {
       var ret = new Date(val).toISOString("de-DE").substring(0, 10);
