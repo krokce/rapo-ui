@@ -268,12 +268,10 @@ export default {
     scheduleTypeChanged() {
       this.scheduleObject.mday = null;
       this.scheduleObject.wday = null;
-      // if (this.scheduleType === "X") {
-      //   this.scheduleObject.hour = "8";
-      //   this.scheduleObject.min = "15";
-      //   this.scheduleObject.sec = "0";
-      //   this.scheduleTimepicker = "08:15:00";
-      // }
+      this.scheduleObject.hour = "8";
+      this.scheduleObject.min = "15";
+      this.scheduleObject.sec = "0";
+      this.scheduleTimepicker = "08:15:00";
     },
     scheduleDateTimeChanged() {
       const scheduleDateTimeParts = this.scheduleTimepicker.split(":");
@@ -354,10 +352,11 @@ export default {
   },
   mounted() {
     var scheduleObjectString = JSON.stringify(this.modelValue);
-    
+
     // Determine schedule type
     if (!this.scheduleType) {
-      if (scheduleObjectString.indexOf("/") > -1 ||
+      if (
+        scheduleObjectString.indexOf("/") > -1 ||
         scheduleObjectString.indexOf("-") > -1 ||
         (String(this.modelValue.mday).indexOf(",") > -1 && String(this.modelValue.wday).indexOf(",") > -1) ||
         (String(this.modelValue.hour) + String(this.modelValue.min) + String(this.modelValue.sec)).indexOf(",") > -1

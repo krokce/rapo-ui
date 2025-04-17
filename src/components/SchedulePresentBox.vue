@@ -53,7 +53,10 @@ export default {
       const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
       if (this.schedule_type === "X") {
-        return this.schedule;
+        const filteredSchedule = Object.fromEntries(
+          Object.entries(JSON.parse(this.schedule)).filter(([, value]) => value !== null)
+        );
+        return JSON.stringify(filteredSchedule);
       } else if (this.schedule_type === "M") {
         for (const m of this.schedule_object.mday) {
           run_on_string.push(m);

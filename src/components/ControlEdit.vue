@@ -711,7 +711,7 @@
                     <td class="text-left">{{ toDateString(control_log.date_to) }}</td>
                     <td class="text-right">
                       <span>
-                        {{ Number(control_log.fetched_number_a).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        {{ (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
                       </span>
                     </td>
                     <td class="text-right">
@@ -719,7 +719,7 @@
                     </td>
                     <td class="text-right">
                       <span>
-                        {{ Number(control_log.error_number_a).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        {{ (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
                       </span>
                     </td>
                     <td class="text-right">
@@ -728,7 +728,7 @@
                       </span>
                     </td>
                     <td class="text-right">
-                      <span> {{ Number(control_log.error_level_a).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
+                      <span> {{ (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
                     </td>
                     <td class="text-right">
                       <span> {{ Number(control_log.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
