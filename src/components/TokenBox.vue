@@ -31,6 +31,7 @@ export default {
       rememberToken: false,
       connectError: false,
       tokenValidationInProgress: false,
+      redirectPath: this.$route.query.redirect || "/controls",
       $q: useQuasar(),
     };
   },
@@ -47,7 +48,8 @@ export default {
         if (this.rememberToken) {
           this.$q.cookies.set("rapo_token", token, { SameSite: "Strict", expires: "365d" });
         }
-        this.$router.push("/");
+        console.log(this.redirectPath);
+        this.$router.push(this.redirectPath);
       }
 
       this.tokenValidationInProgress = false;

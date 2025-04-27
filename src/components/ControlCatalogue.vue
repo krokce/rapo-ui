@@ -36,20 +36,18 @@
                 <div class="text-weight-bold text-grey-9 text-subtitle1">
                   {{ control.control_name }}
                 </div>
-                <small class="text-grey-7">
-                  <router-link
-                    :to="{
-                      name: 'edit-control',
-                      params: { controlId: control.control_id },
-                    }">
-                    v.{{ toDateTimeString(control.updated_date) }}
-                  </router-link>
-                </small>
+                <router-link
+                  :to="{
+                    name: 'edit-control',
+                    params: { controlId: control.control_id },
+                  }">
+                  <small class="text-grey-7"> v.{{ toDateTimeString(control.updated_date) }} </small>
+                </router-link>
               </div>
             </td>
             <td style="width: 100px">
               <div class="row justify-start items-center">
-                <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>             
+                <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>
               </div>
             </td>
             <td class="text-left">
@@ -111,7 +109,7 @@
                   text-color="white"
                   icon="fas fa-history"
                   @click="$q.notify(control.iteration_config)">
-                  +{{ JSON.parse(control.iteration_config).length }} Iteration{{ (JSON.parse(control.iteration_config).length > 1) ? 's' : '' }}
+                  +{{ JSON.parse(control.iteration_config).length }} Iteration{{ JSON.parse(control.iteration_config).length > 1 ? "s" : "" }}
                 </q-chip>
               </div>
             </td>

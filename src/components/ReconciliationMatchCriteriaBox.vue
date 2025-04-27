@@ -1,6 +1,5 @@
 <template>
   <div class="col q-gutter-y-md">
-
     <q-card class="q-pa-sm" flat bordered>
       <q-item-section class="q-ma-xs">
         <q-item-label>Match criteria</q-item-label>
@@ -44,14 +43,12 @@
               { label: 'Yes', value: true },
               { label: 'No', value: false },
             ]"
-            label="Allow null" />
-          <q-btn
-            size="sm"
-            color="primary"
-            flat
-            round
-            icon="fas fa-minus"
-            @click="removeCorrelationConfig(index)" />
+            label="Allow null">
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+              If set to "Yes" records with null keys will be included in the reconciliation and marked as discrepancies
+            </q-tooltip>
+          </q-select>
+          <q-btn size="sm" color="primary" flat round icon="fas fa-minus" @click="removeCorrelationConfig(index)" />
           <q-btn
             v-if="index == ruleConfigObject.correlation_config.length - 1"
             size="sm"
@@ -62,12 +59,12 @@
             @click="addCorrelationConfig" />
         </div>
         <q-btn
-            v-if="ruleConfigObject.correlation_config.length == 0"
-            size="md"
-            color="primary"
-            icon="fas fa-plus"
-            label="Add match criteria"
-            @click="addCorrelationConfig" />
+          v-if="ruleConfigObject.correlation_config.length == 0"
+          size="md"
+          color="primary"
+          icon="fas fa-plus"
+          label="Add match criteria"
+          @click="addCorrelationConfig" />
       </q-card-section>
     </q-card>
   </div>

@@ -52,7 +52,7 @@ const router = createRouter({
 
 router.beforeEach(function (to, from, next) {
   if (!store.state.tokenIsValid && to.name !== "token") {
-    next("/token");
+    next({ path: "/token", query: { redirect: to.fullPath } });
   } else {
     if (to.meta.hideSearch) {
       store.state.hideSearch = true;

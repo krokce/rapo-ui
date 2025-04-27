@@ -118,13 +118,33 @@
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.prerequisite_value }}</td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-chip class="cursor-pointer">
-                <q-avatar v-if="control.status == 'Error'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
-                <q-avatar v-if="control.status == 'Running'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
-                <q-avatar v-if="control.status == 'Success'" icon="fas fa-check-circle" color="green" text-color="white" />
-                <q-avatar v-if="control.status == 'Initiated'" icon="fas fa-play-circle" color="blue" text-color="white" />
-                <q-avatar v-if="control.status == 'Revoked'" icon="fas fa-minus-circle" color="grey" text-color="white" />
-                <q-avatar v-if="control.status == 'Canceled'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
-                {{ control.status }}
+                <q-avatar v-if="control.status == 'I'" icon="fas fa-play-circle" color="blue" text-color="white" />
+                <q-avatar v-if="control.status == 'E'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
+                <q-avatar v-if="control.status == 'R' || control.status == 'P' || control.status == 'F'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
+                <q-avatar v-if="control.status == 'S'" icon="fas fa-minus-circle" color="deep-orange-4" text-color="white" />
+                <q-avatar v-if="control.status == 'D'" icon="fas fa-check-circle" color="green" text-color="white" />
+                <q-avatar v-if="control.status == 'X'" icon="fas fa-times-circle" color="grey" text-color="white" />
+                <q-avatar v-if="!control.status || control.status == 'C'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
+                <q-avatar v-if="control.status == 'W'" icon="fas fa-hourglass-half" color="amber-7" text-color="white" />
+                {{
+                  control.status === "E"
+                    ? "Error"
+                    : (control.status == 'R' || control.status == 'P' || control.status == 'F')
+                    ? "Running"
+                    : control.status === "D"
+                    ? "Success"
+                    : control.status === "S"
+                    ? "Terminated"
+                    : control.status === "I"
+                    ? "Initialized"
+                    : control.status === "X"
+                    ? "Revoked"
+                    : (!control.status || control.status === "C")
+                    ? "Cancelled"
+                    : control.status === "W"
+                    ? "Waiting"
+                    : "Unknown"
+                }}
               </q-chip>
             </td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
@@ -140,11 +160,11 @@
                       <q-item-section> Edit control </q-item-section>
                     </q-item>
                     <q-separator />
-                    <q-item v-if="control.status != 'Revoked'" dense clickable class="col items-center" @click="showRevokeDialog(control)" v-close-popup>
+                    <q-item v-if="control.status != 'X'" dense clickable class="col items-center" @click="showRevokeDialog(control)" v-close-popup>
                       <q-item-section> Revoke run </q-item-section>
                     </q-item>
                     <q-item
-                      v-if="control.status == 'Running' || control.status == 'Initiated'"
+                      v-if="control.status == 'R' || control.status == 'I'"
                       dense
                       clickable
                       class="col items-center"
@@ -152,8 +172,11 @@
                       v-close-popup>
                       <q-item-section> Cancel run </q-item-section>
                     </q-item>
-                    <q-item v-if="control.status == 'Error'" dense clickable class="col items-center" @click="showErrorDialog(control)" v-close-popup>
+                    <q-item v-if="control.status == 'E'" dense clickable class="col items-center" @click="showErrorDialog(control)" v-close-popup>
                       <q-item-section> Show error log </q-item-section>
+                    </q-item>
+                    <q-item dense clickable @click="dropTemporaryTables(control)" v-close-popup>
+                      <q-item-section> Drop TEMP tables </q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -259,7 +282,7 @@ export default {
             .then((response) => {
               if (response.ok) {
                 this.$q.notify({ type: "positive", message: "Control run '" + control.control_name + " PID:" + control.process_id + "' was canceled" });
-                control.status = "Canceled";
+                control.status = "C";
               } else {
                 this.$q.notify({ type: "negative", message: "Stopping control run '" + control.control_name + " PID:" + control.process_id + "' failed" });
               }
@@ -289,9 +312,38 @@ export default {
             .then((response) => {
               if (response.ok) {
                 this.$q.notify({ type: "positive", message: "Control run '" + control.control_name + " PID:" + control.process_id + "' was revoked" });
-                control.status = "Revoked";
+                control.status = "X";
               } else {
                 this.$q.notify({ type: "negative", message: "Revoke of control run '" + control.control_name + " PID:" + control.process_id + "' failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
+    },
+    dropTemporaryTables(control) {
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message: "Do you really want to drop all debug temporary tables for execution with PID: " + control.process_id + " ?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          fetch("/api/delete-control-temporary-tables?id=" + control.process_id, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "All temporary tables for PID:" + control.process_id + " were deleted" });
+              } else {
+                this.$q.notify({ type: "negative", message: "Temporary tables deletion for PID:" + control.process_id + "' failed" });
               }
             })
             .then(() => {

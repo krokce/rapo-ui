@@ -87,6 +87,10 @@ export default {
             menuText: "Basic filter example",
             exampleText: "service_id = 1 and direction_id = 1",
           },
+          {
+            menuText: "Subselect filter example",
+            exampleText: "ftr_code in (\n\tselect feature_code \n\tfrom feature@amdocs \n\twhere ftr_expiration_date is null\n)",
+          },
         ],
         preparation_sql: [
           {
@@ -119,6 +123,31 @@ export default {
             exampleText: "select count(*) from vids_rr7_pr_mms_dws\nwhere 1=2",
           },
         ],
+        completion_sql: [
+          {
+            menuText: "Materialized view refresh",
+            exampleText: "begin\n\tdbms_snapshot.refresh('MVIDS_ACTIVE_5G_HLR', 'c');\nend;",
+          },
+          {
+            menuText: "Truncate and insert into table",
+            exampleText:
+              "begin\n\texecute immediate 'truncate table tmp_table';\n\tinsert into tmp_table select subscriber_no, ban, status_date from ds_subscribers where state = trunc(sysdate);\n\tcommit;\nend;",
+          },
+          {
+            menuText: "Insert log line (using vars)",
+            exampleText:
+              "insert into log_sp_run\nvalues ('{control_name} with PID: {process_id} executed', 'COMPLETE', to_date('{control_date:%Y%m%d}', 'yyyymmdd'), sysdate, null, null);",
+          },
+          {
+            menuText: "Complex completion example (using vars)",
+            exampleText:
+              "declare\n	check_value integer;\nbegin\n	execute immediate 'select count(*) from user_tables where table_name = ''TMP_{control_name}_{control_date:%Y%m%d}''' into check_value;\n	if check_value > 0 then\n		execute immediate 'drop table tmp_{control_name}_{control_date:%Y%m%d}';\n	end if;\n	execute immediate 'create table tmp_{control_name}_{control_date:%Y%m%d} as ' || 'select * from vids_rr6_pr_sms_dws ' || 'where charged_date >= trunc(sysdate)-7';\nend;",
+          },
+          {
+            menuText: "Trigger another Rapo control execution",
+            exampleText: "begin\n\tracs_kpi_pkg.run_rapo_control('PO1_DR_MSC_V', to_date('{control_date:%Y%m%d}', 'yyyymmdd'));\nend;",
+          },
+        ],
       },
     };
   },
@@ -131,12 +160,14 @@ export default {
           return this.examples.rule_config;
         case "Case config":
           return this.examples.case_config;
-        case "Result config":
+        case "Case mapping":
           return this.examples.result_config;
         case "Preparation SQL":
           return this.examples.preparation_sql;
         case "Prerequisite SQL":
           return this.examples.prerequisite_sql;
+        case "Completion SQL":
+          return this.examples.completion_sql;
         case "Filter":
           return this.examples.source_filter;
         case "Filter (Datasource A)":

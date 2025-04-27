@@ -35,11 +35,11 @@
           narrow-indicator
           no-caps>
           <q-tab name="main" label="Main" icon="fas fa-window-maximize" />
-          <q-tab name="data" label="Data" icon="fas fa-database" />
-          <q-tab name="sql" label="SQL" icon="fas fa-code" />
-          <q-tab v-if="control.control_type !== 'REP' && control.control_type !== 'REC'" name="case" label="Case config" icon="fas fa-tag" />
+          <q-tab name="data" label="Data and logic" icon="fas fa-database" />
+          <q-tab name="sql" label="SQL Scripts" icon="fas fa-code" />
+          <q-tab v-if="control.control_type !== 'REP' && control.control_type !== 'REC'" name="case" label="Case definition" icon="fas fa-tag" />
           <q-tab name="scheduler" label="Scheduler" icon="fas fa-clock" />
-          <q-tab v-if="control.control_id" name="log" label="Last runs" icon="fas fa-file-medical-alt" />
+          <q-tab v-if="control.control_id" name="log" label="Run log" icon="fas fa-file-medical-alt" />
         </q-tabs>
 
         <q-separator />
@@ -126,7 +126,12 @@
                       { label: 'Yes', value: 'Y' },
                       { label: 'No', value: 'N' },
                     ]"
-                    label="Pre-run hook" />
+                    label="Pre-run hook">
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      If 'Yes' is selected pre-run hook will be executed before the control is started. <br />
+                      function RAPO_PRERUN_CONTROL_HOOK (in_process_id number) return varchar2
+                    </q-tooltip>
+                  </q-select>
 
                   <q-select
                     class="col"
@@ -138,7 +143,12 @@
                       { label: 'Yes', value: 'Y' },
                       { label: 'No', value: 'N' },
                     ]"
-                    label="Post-run hook" />
+                    label="Post-run hook">
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      If 'Yes' is selected post-run hook will be executed after control execution completes. <br />
+                      procedure RAPO_POSTRUN_CONTROL_HOOK
+                    </q-tooltip>
+                  </q-select>
                 </div>
 
                 <div class="row q-my-md q-gutter-md">
@@ -155,24 +165,36 @@
                     <template v-slot:prepend>
                       <q-icon name="fas fa-microchip" @click.stop.prevent />
                     </template>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      Execute in parallel mode (oracle /*PARALLEL*/ hint). <br />Maximum is 4.
+                    </q-tooltip>
                   </q-input>
 
-                  <q-input class="col" v-model.number="control.instance_limit" type="number" outlined label="Instance limit">
+                  <q-input class="col" v-model.number="control.instance_limit" type="number" :min="1" :step="1" outlined label="Instance limit">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-stream" @click.stop.prevent />
                     </template>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      Number of control instances allowed to run in parallel.<br />Does not apply to controls started by the scheduler.
+                    </q-tooltip>
                   </q-input>
 
                   <q-input class="col" v-model.number="control.timeout" type="number" outlined label="Timeout (sec.)">
                     <template v-slot:prepend>
                       <q-icon name="fas fas fa-stopwatch" @click.stop.prevent />
                     </template>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      Stop process if runs longer than defined timeout. <br />Leave empty for no timeout.
+                    </q-tooltip>
                   </q-input>
 
                   <q-input class="col" v-model.number="control.output_limit" type="number" outlined label="Output limit">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-list-ol" @click.stop.prevent />
                     </template>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      Limit the number of records in the output table. <br />Leave empty for no limit.
+                    </q-tooltip>
                   </q-input>
 
                   <q-select
@@ -187,7 +209,12 @@
                       { label: 'No, drop on each run', value: 'drop' },
                     ]"
                     label="Keep past results"
-                    @update:model-value="deletionDropChanged" />
+                    @update:model-value="deletionDropChanged">
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      Results retention policy<br />If 'Yes' is selected define the retention period in the next field.<br />If 'No' is selected the results
+                      will be deleted or dropped on each run.
+                    </q-tooltip>
+                  </q-select>
 
                   <q-input
                     class="col"
@@ -205,6 +232,7 @@
                 <div class="row q-my-md q-gutter-md">
                   <q-btn label="Save" type="submit" color="primary" />
                   <q-btn label="Cancel" type="reset" color="primary" flat class="q-ml-sm" />
+                  <q-btn label="Recreate schema" color="red" flat class="q-ml-auto" @click="recreateSchema(control)" />
                 </div>
               </div>
             </q-tab-panel>
@@ -483,6 +511,9 @@
                           <template v-slot:prepend>
                             <q-icon name="fas fa-long-arrow-alt-left" @click.stop.prevent />
                           </template>
+                          <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                            Lower timestamp tolerance value in seconds (match if A minus B timestamp is greater than this value in seconds)
+                          </q-tooltip>
                         </q-input>
 
                         <q-input
@@ -496,6 +527,9 @@
                           <template v-slot:prepend>
                             <q-icon name="fas fa-long-arrow-alt-right" @click.stop.prevent />
                           </template>
+                          <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                            Upper timestamp tolerance value in seconds (match if A minus B timestamp is lower than this value in seconds)
+                          </q-tooltip>
                         </q-input>
 
                         <q-icon
@@ -516,6 +550,10 @@
                           <template v-slot:prepend>
                             <q-icon name="far fa-clock" @click.stop.prevent />
                           </template>
+                          <q-tooltip anchor="top right" self="bottom right" :offset="[0, 5]">
+                            Lower timeshift tolerance value in seconds <br />
+                            (if A minus B is between this value and "Time tolerance from" - output as mismatch)
+                          </q-tooltip>
                         </q-input>
 
                         <q-input
@@ -529,6 +567,10 @@
                           <template v-slot:prepend>
                             <q-icon name="far fa-clock" @click.stop.prevent />
                           </template>
+                          <q-tooltip anchor="top right" self="bottom right" :offset="[0, 5]">
+                            Upper timeshift tolerance value in seconds <br />
+                            (if A minus B is between "Time tolerance to" and this value - output as mismatch)
+                          </q-tooltip>
                         </q-input>
                       </div>
                     </q-card-section>
@@ -557,22 +599,33 @@
             </q-tab-panel>
 
             <q-tab-panel name="sql">
-              <div class="q-ma-lg q-gutter-y-md">
+              <div class="q-ma-lg q-gutter-y-lg">
                 <div class="row q-gutter-md">
                   <div class="col">
-                    <code-box label="Preparation SQL" v-model="control.preparation_sql"> </code-box>
+                    <code-box label="Preparation SQL" v-model="control.preparation_sql"></code-box>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[-120, -20]">
+                      Preparation SQL is executed before the control is started. It can be used to prepare the data for the control. See the enclosed examples.
+                    </q-tooltip>
                   </div>
                 </div>
 
                 <div class="row q-gutter-md">
                   <div class="col">
                     <code-box label="Prerequisite SQL" v-model="control.prerequisite_sql"> </code-box>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[-120, -20]">
+                      Prerequisite SQL is executed before the control is started. If the number returned is 0 the control will be terminated. See the enclosed
+                      positive and negative examples.
+                    </q-tooltip>
                   </div>
                 </div>
 
                 <div class="row q-gutter-md">
                   <div class="col">
                     <code-box label="Completion SQL" v-model="control.completion_sql"> </code-box>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[-120, -20]">
+                      Completion SQL is executed after the control is finished. It can be used to clean-up data, log results or execute chain of controls. See
+                      the enclosed examples.
+                    </q-tooltip>
                   </div>
                 </div>
 
@@ -584,13 +637,17 @@
             </q-tab-panel>
 
             <q-tab-panel name="case">
-              <div class="q-ma-lg q-gutter-y-md">
-                <div class="row q-gutter-md">
+              <div class="q-ma-lg">
+                <div class="column q-gutter-y-xl">
                   <div class="col">
                     <!-- <code-box label="Case config" v-model="control.case_config"> </code-box> -->
                     <case-config-box class="col" v-model="this.caseConfigObject"> </case-config-box>
-                    <br />
-                    <code-box label="Result config" v-model="control.case_definition"> </code-box>
+                  </div>
+                  <div class="col">
+                    <code-box label="Case mapping" v-model="control.case_definition"> </code-box>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      Use simple SQL case structure to define which discrepancies will be mapped to which Case IDs defined above. See the enclosed example.
+                    </q-tooltip>
                   </div>
                 </div>
 
@@ -656,103 +713,148 @@
               </div>
             </q-tab-panel>
             <q-tab-panel name="log">
-              <div class="row q-my-lg">
-                <q-input
-                class="col-2"
-                v-model.number="log_days_back"
-                type="number"
-                outlined
-                label="Days back"
-                :min="1"
-                :max="365"
-                :step="1"
-                @update:model-value="updateLogDaysBack">
-                <template v-slot:prepend>
-                  <q-icon name="fas fa-history" @click.stop.prevent />
-                </template>
-              </q-input>
-            </div>
-              <q-markup-table flat dense>
-                <thead>
-                  <tr class="bg-blue-grey-2">
-                    <th class="text-left">#</th>
-                    <th class="text-left">Added</th>
-                    <th class="text-left">Start</th>
-                    <th class="text-left">End</th>
-                    <th class="text-left">PID</th>
-                    <th class="text-left">Run from</th>
-                    <th class="text-left">Run to</th>
-                    <th class="text-right">Fetched A</th>
-                    <th class="text-right">Fetched B</th>
-                    <th class="text-right">Discr. A</th>
-                    <th class="text-right">Discr. B</th>
-                    <th class="text-right">Err. lvl A [%]</th>
-                    <th class="text-right">Err. lvl B [%]</th>
-                    <th class="text-right">PV</th>
-                    <th class="text-left">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="cursor-pointer" v-for="(control_log, index) in controlLogs" :key="control_log.process_id" @click="showFullLog(control_log)">
-                    <td class="text-left">{{ index + 1 }}. &nbsp;</td>
-                    <td class="text-left">
-                      <strong>{{ toDateTimeString(control_log.added) }}</strong>
-                    </td>
-                    <td class="text-left">
-                      <strong>{{ toDateTimeString(control_log.start_date) }}</strong>
-                    </td>
-                    <td class="text-left">
-                      <strong>{{ toDateTimeString(control_log.end_date) }}</strong>
-                    </td>
-                    <td class="text-left text-weight-bold text-blue-grey-7">
-                      {{ control_log.process_id }}
-                    </td>
-                    <td class="text-left">{{ toDateString(control_log.date_from) }}</td>
-                    <td class="text-left">{{ toDateString(control_log.date_to) }}</td>
-                    <td class="text-right">
-                      <span>
-                        {{ (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
-                      </span>
-                    </td>
-                    <td class="text-right">
-                      {{ Number(control_log.fetched_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
-                    </td>
-                    <td class="text-right">
-                      <span>
-                        {{ (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
-                      </span>
-                    </td>
-                    <td class="text-right">
-                      <span>
-                        {{ Number(control_log.error_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
-                      </span>
-                    </td>
-                    <td class="text-right">
-                      <span> {{ (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
-                    </td>
-                    <td class="text-right">
-                      <span> {{ Number(control_log.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
-                    </td>
-                    <td class="text-right">{{ control_log.prerequisite_value }}</td>
-                    <td class="text-left">
-                      <q-chip class="cursor-pointer">
-                        <q-avatar size="sm" v-if="control_log.status == 'E'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
-                        <q-avatar size="sm" v-if="control_log.status == 'R'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
-                        <q-avatar size="sm" v-if="control_log.status == 'D'" icon="fas fa-check-circle" color="green" text-color="white" />
-                        <q-avatar size="sm" v-if="control_log.status == 'I'" icon="fas fa-play-circle" color="blue" text-color="white" />
-                        <q-avatar size="sm" v-if="control_log.status == 'X'" icon="fas fa-minus-circle" color="grey" text-color="white" />
-                        <q-avatar size="sm" v-if="control_log.status == 'C'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
-                        Full log
-                      </q-chip>
-                    </td>
-                  </tr>
-                </tbody>
-              </q-markup-table>
+              <div class="q-ma-lg q-gutter-y-md">
+                <div class="row q-my-lg">
+                  <q-input
+                    class="col-1"
+                    v-model.number="log_days_back"
+                    type="number"
+                    outlined
+                    label="Days back"
+                    :min="1"
+                    :max="365"
+                    :step="1"
+                    @update:model-value="updateLogDaysBack">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-history" @click.stop.prevent />
+                    </template>
+                  </q-input>
+                </div>
+                <q-markup-table flat dense>
+                  <thead>
+                    <tr class="bg-blue-grey-2">
+                      <th class="text-left">#</th>
+                      <th class="text-left">Added</th>
+                      <th class="text-left">Start</th>
+                      <th class="text-left">End</th>
+                      <th class="text-left">PID</th>
+                      <th class="text-left">Run from</th>
+                      <th class="text-left">Run to</th>
+                      <th class="text-right">Fetched A</th>
+                      <th class="text-right">Fetched B</th>
+                      <th class="text-right">Discr. A</th>
+                      <th class="text-right">Discr. B</th>
+                      <th class="text-right">Err. lvl A [%]</th>
+                      <th class="text-right">Err. lvl B [%]</th>
+                      <th class="text-right">PV</th>
+                      <th class="text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="cursor-pointer" v-for="(control_log, index) in controlLogs" :key="control_log.process_id" @click="showFullLog(control_log)">
+                      <td class="text-left">{{ index + 1 }}. &nbsp;</td>
+                      <td class="text-left">
+                        <strong>{{ toDateTimeString(control_log.added) }}</strong>
+                      </td>
+                      <td class="text-left">
+                        <strong>{{ toDateTimeString(control_log.start_date) }}</strong>
+                      </td>
+                      <td class="text-left">
+                        <strong>{{ toDateTimeString(control_log.end_date) }}</strong>
+                      </td>
+                      <td class="text-left text-weight-bold text-blue-grey-7">
+                        {{ control_log.process_id }}
+                      </td>
+                      <td class="text-left">{{ toDateString(control_log.date_from) }}</td>
+                      <td class="text-left">{{ toDateString(control_log.date_to) }}</td>
+                      <td class="text-right">
+                        <span>
+                          {{
+                            (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })
+                          }}
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        {{ Number(control_log.fetched_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                      </td>
+                      <td class="text-right">
+                        <span>
+                          {{
+                            (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })
+                          }}
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        <span>
+                          {{ Number(control_log.error_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        <span>
+                          {{
+                            (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })
+                          }}%
+                        </span>
+                      </td>
+                      <td class="text-right">
+                        <span>
+                          {{ Number(control_log.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+                        </span>
+                      </td>
+                      <td class="text-right">{{ control_log.prerequisite_value }}</td>
+                      <td class="text-left">
+                        <q-chip class="cursor-pointer">
+                <q-avatar v-if="control_log.status == 'I'" icon="fas fa-play-circle" color="blue" text-color="white" />
+                <q-avatar v-if="control_log.status == 'E'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
+                <q-avatar v-if="control_log.status == 'R' || control_log.status == 'P' || control_log.status == 'F'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
+                <q-avatar v-if="control_log.status == 'S'" icon="fas fa-minus-circle" color="deep-orange-4" text-color="white" />
+                <q-avatar v-if="control_log.status == 'D'" icon="fas fa-check-circle" color="green" text-color="white" />
+                <q-avatar v-if="control_log.status == 'X'" icon="fas fa-times-circle" color="grey" text-color="white" />
+                <q-avatar v-if="!control_log.status || control_log.status == 'C'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
+                <q-avatar v-if="control_log.status == 'W'" icon="fas fa-hourglass-half" color="amber-7" text-color="white" />
+                {{
+                  control_log.status === "E"
+                    ? "Error"
+                    : (control_log.status == 'R' || control_log.status == 'P' || control_log.status == 'F')
+                    ? "Running"
+                    : control_log.status === "D"
+                    ? "Success"
+                    : control_log.status === "S"
+                    ? "Terminated"
+                    : control_log.status === "I"
+                    ? "Initialized"
+                    : control_log.status === "X"
+                    ? "Revoked"
+                    : (!control_log.status || control_log.status === "C")
+                    ? "Cancelled"
+                    : control_log.status === "W"
+                    ? "Waiting"
+                    : "Unknown"
+                }}
+              </q-chip>
+                      </td>
+                    </tr>
+                  </tbody>
+                </q-markup-table>
 
-              <!-- <pre class="bg-grey-2 q-pa-sm" style="overflow: auto">
+                <div class="row q-my-md q-gutter-md">
+                  <q-btn label="Save" type="submit" color="primary" />
+                  <q-btn label="Cancel" type="reset" color="primary" flat class="q-ml-sm" />
+                </div>
+                <!-- <pre class="bg-grey-2 q-pa-sm" style="overflow: auto">
                       {{ formattedJSON }}
               </pre>
                -->
+              </div>
             </q-tab-panel>
           </q-tab-panels>
         </q-form>
@@ -765,7 +867,7 @@
 
 <script>
 import { useQuasar } from "quasar";
-import { mapGetters } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 import CodeBox from "./CodeBox.vue";
 import ScheduleEditBox from "./ScheduleEditBox.vue";
 import ReconciliationDiscrepancyCheckboxes from "./ReconciliationDiscrepancyCheckboxes.vue";
@@ -791,7 +893,7 @@ export default {
   props: {
     controlId: {
       type: String,
-      default: "new",
+      default: "t",
     },
   },
   data() {
@@ -833,6 +935,7 @@ export default {
     ...mapGetters(["controlCatalogueById"]),
   },
   methods: {
+    ...mapActions(["updateControlCatalogue"]),
     updateParallelism(value) {
       this.control.parallelism = Math.min(4, Math.abs(value));
     },
@@ -980,6 +1083,7 @@ export default {
           need_recons_a: false,
           need_recons_b: false,
           allow_duplicates: false,
+          correlation_limit: true,
           time_shift_from: 0,
           time_shift_to: 0,
           time_tolerance_from: 0,
@@ -1372,15 +1476,18 @@ export default {
         });
         errorTab = "main";
       } else if (this.control.with_drop === "N" && this.control.with_deletion === "N" && !this.control.days_retention) {
-        // validate if data source is selected
-
         this.$q.notify({
           type: "negative",
           message: "Please select data retention period",
         });
         errorTab = "main";
+      } else if (this.control.instance_limit == null || this.control.instance_limit < 1) {
+        this.$q.notify({
+          type: "negative",
+          message: "Please select instance limit greater than 0",
+        });
+        errorTab = "main";
       } else if (this.control.control_type === "REC" || this.control.control_type === "CMP") {
-        // validate if data source is selected
         if (!this.control.source_name_a || !this.control.source_name_b) {
           this.$q.notify({
             type: "negative",
@@ -1395,7 +1502,6 @@ export default {
           errorTab = "data";
         }
       } else if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
-        // validate if data source is selected
         if (!this.control.source_name) {
           this.$q.notify({
             type: "negative",
@@ -1423,6 +1529,35 @@ export default {
         message: "Changes discarded",
       });
       this.$router.push({ name: "controls" });
+    },
+    recreateSchema(control) {
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message: "All control results will be deleted! Do you really want to recreate result tables?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          fetch("/api/delete-control-output-tables?name=" + control.control_name, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "Schema for " + control.control_name + " was deleted. It will be recreated on the next run." });
+              } else {
+                this.$q.notify({ type: "negative", message: "Schema deletion for " + control.control_name + "' failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
     },
   },
   watch: {
@@ -1479,10 +1614,15 @@ export default {
       }
     },
   },
-  mounted() {
+  async mounted() {
     this.getDatasources();
 
-    const controlData = this.controlCatalogueById(this.controlId);
+    let controlData = this.controlCatalogueById(this.controlId);
+
+    if (!controlData && this.controlId != "new") {
+      await this.updateControlCatalogue();
+      controlData = this.controlCatalogueById(this.controlId);
+    }
 
     if (controlData) {
       this.control = controlData;
@@ -1576,12 +1716,11 @@ export default {
         with_drop: "N",
         days_back: 1,
         days_retention: 90,
-        timeout: 3600,
+        parallelism: 1,
         instance_limit: 1,
         period_type: "D",
         period_back: 1,
         period_number: 1,
-        output_limit: 0,
       };
     }
   },

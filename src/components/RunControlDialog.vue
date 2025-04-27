@@ -4,7 +4,7 @@
   </span>
 
   <q-dialog v-model="visible">
-    <q-card class="column my-card" style="width: auto">
+    <q-card class="column my-card" style="width: 400px">
       <q-card-section class="col bg-blue-grey-2">
         <div class="row no-wrap items-center">
           <div class="text-h6 ellipsis">{{ control.control_name }}</div>
@@ -16,11 +16,17 @@
           Run for <span v-if="!range">date</span> <span v-else>range</span>:
           <p>{{ selectDate }}</p>
 
-          <div class="q-gutter-md row items-start">
+          <div class="row items-start">
             <q-date v-model="selectDate" :range="range" today-btn mask="YYYY-MM-DD" color="teal" flat />
           </div>
-          <div>
+
+          <div class="column">
             <q-toggle label="Run for date range" color="teal" :false-value="false" :true-value="true" v-model="range" @update:model-value="rangeChange" />
+
+            <q-toggle color="blue" label="Run in debug mode" v-model="debug_mode">
+              <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Leave RAPO_TEMP% tables after execution </q-tooltip>
+            </q-toggle>
+
           </div>
         </div>
       </q-card-section>
@@ -43,6 +49,7 @@ export default {
     return {
       visible: false,
       range: false,
+      debug_mode: false,
       selectDate: new Date().toISOString().substring(0, 10),
       $q: useQuasar(),
     };
@@ -66,10 +73,9 @@ export default {
 
       var url = "";
       if (this.range) {
-        url =
-          "/api/run-control?name=" + this.control.control_name + "&date_from=" + this.selectDate.from + "&date_to=" + this.selectDate.to;
+        url = "/api/run-control?name=" + this.control.control_name + "&date_from=" + this.selectDate.from + "&date_to=" + this.selectDate.to + (this.debug_mode?"&debug_mode=true":"");
       } else {
-        url = "/api/run-control?name=" + this.control.control_name + "&date=" + this.selectDate;
+        url = "/api/run-control?name=" + this.control.control_name + "&date=" + this.selectDate + (this.debug_mode?"&debug_mode=true":"");
       }
 
       fetch(url, {
@@ -88,8 +94,7 @@ export default {
           this.$q.loadingBar.stop();
           if (this.hook) {
             this.hook();
-          }
-          else {
+          } else {
             this.$router.push({ name: "results" });
           }
         });

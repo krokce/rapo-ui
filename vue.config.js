@@ -8,4 +8,12 @@ module.exports = defineConfig({
       rtlSupport: false,
     },
   },
+  devServer: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:7005',
+        changeOrigin: true
+      }
+    }
+  }
 });

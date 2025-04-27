@@ -42,12 +42,18 @@
             <template v-slot:prepend>
               <q-icon name="fas fa-long-arrow-alt-left" @click.stop.prevent />
             </template>
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+              Lower comparison tolerance value (match if A minus B is greater than this value)
+            </q-tooltip>
           </q-input>
 
           <q-input outlined class="col-2" v-model.number="ruleConfigObject.discrepancy_config[index].numeric_tolerance_to" type="number" label="Tolerance to">
             <template v-slot:prepend>
               <q-icon name="fas fa-long-arrow-alt-right" @click.stop.prevent />
             </template>
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+              Upper tolerance value (match if A minus B is lower than this value)
+            </q-tooltip>
           </q-input>
 
           <q-icon name="fas fa-circle" size="15px" color="blue-grey-3" />
@@ -62,15 +68,12 @@
               { label: 'Yes', value: true },
               { label: 'No', value: false },
             ]"
-            label="Percentage" />
-
-          <q-btn
-            size="sm"
-            color="primary"
-            flat
-            round
-            icon="fas fa-minus"
-            @click="removeCorrelationConfig(index)" />
+            label="Percentage">
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+              If set to "Yes" difference incl. tolerance values will be treated as percentages
+            </q-tooltip>
+          </q-select>
+          <q-btn size="sm" color="primary" flat round icon="fas fa-minus" @click="removeCorrelationConfig(index)" />
           <q-btn
             v-if="index == ruleConfigObject.discrepancy_config.length - 1"
             size="sm"

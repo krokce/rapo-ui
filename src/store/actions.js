@@ -1,9 +1,9 @@
 import { LoadingBar } from "quasar";
 
 export default {
-  updateControlCatalogue(context) {
+  async updateControlCatalogue(context) {
     LoadingBar.start();
-    fetch("/api/get-all-controls", {
+    await fetch("/api/get-all-controls", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${context.getters.getToken}`,
@@ -20,12 +20,12 @@ export default {
         LoadingBar.stop();
       });
   },
-  updateControlResults(context) {
+  async updateControlResults(context) {
     LoadingBar.start();
 
     // console.log("Call /api/get-control-runs with param:", payload);
 
-    fetch("/api/get-control-runs", {
+    await fetch("/api/get-control-runs", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${context.getters.getToken}`,
