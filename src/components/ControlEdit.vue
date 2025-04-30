@@ -1194,20 +1194,19 @@ export default {
     },
     controlVersionChanged() {
       this.control = this.controlVersion;
+      this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
 
       try {
         if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
           if (this.control["output_table"]) {
             this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
           }
-
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
           this.getDatasourceColumns(this.control.source_name, "date").then((data) => (this.datasourceDateColumns = data));
-        } else {
+        } else if (this.control.control_type === "REC") {
           if (this.control["output_table_a"]) {
             this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
           }
-
           this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
           this.getDatasourceColumns(this.control.source_name_a, "date").then((data) => (this.datasourceADateColumns = data));
           this.getDatasourceColumns(this.control.source_name_a, "numeric").then((data) => (this.datasourceANumColumns = data));
@@ -1218,30 +1217,70 @@ export default {
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
           this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
           this.getDatasourceColumns(this.control.source_name_b, "numeric").then((data) => (this.datasourceBNumColumns = data));
-        }
+        } else if (this.control.control_type === "CMP") {
+          if (this.control["output_table"]) {
+            this.cmpOutputTable = JSON.parse(this.control["output_table"]).columns;
+            this.cmpOutputTable.forEach((element) => {
+              for (const key in element) {
+                if (element[key] === null) {
+                  delete element[key];
+                } else {
+                  element[key] = element[key].toUpperCase();
+                }
+              }
+            });
+          }
 
-        this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
+          this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
+          this.getDatasourceColumns(this.control.source_name_a, "date").then((data) => (this.datasourceADateColumns = data));
+
+          this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
+          this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
+        }
 
         if (this.control.rule_config) {
           this.ruleConfigObject = JSON.parse(this.control.rule_config);
         } else {
-          this.ruleConfigObject = {};
+          if (this.control.control_type === "REC") {
+            this.ruleConfigObject = {
+              need_issues_a: true,
+              need_issues_b: true,
+              need_recons_a: false,
+              need_recons_b: false,
+              allow_duplicates: false,
+              time_shift_from: 0,
+              time_shift_to: 0,
+              time_tolerance_from: 0,
+              time_tolerance_to: 0,
+              correlation_config: [],
+              discrepancy_config: [],
+            };
+          } else if (this.control.control_type === "CMP") {
+            this.ruleConfigObject = [];
+          } else if (this.control.control_type === "REP") {
+            this.ruleConfigObject = null;
+          } else if (this.control.control_type === "ANL") {
+            this.ruleConfigObject = null;
+          } else {
+            this.ruleConfigObject = null;
+          }
+        }
+
+        if (this.control.error_definition && this.control.control_type == "CMP") {
+          this.ruleErrorObject = JSON.parse(this.control.error_definition);
         }
 
         if (this.control.case_config) {
           this.caseConfigObject = JSON.parse(this.control.case_config);
-        } else {
-          this.caseConfigObject = [];
         }
-
         if (this.control.iteration_config) {
           this.iterationConfigObject = JSON.parse(this.control.iteration_config);
-        } else {
-          this.iterationConfigObject = [];
         }
       } catch (err) {
         console.log(err);
       }
+
+      this.withDeleteionDrop = this.control.with_drop === "Y" ? "drop" : this.control.with_deletion === "Y" ? "deletion" : "N";
     },
     deletionDropChanged() {
       if (this.withDeleteionDrop === "N") {
