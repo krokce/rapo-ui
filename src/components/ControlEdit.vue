@@ -385,8 +385,17 @@
                     </template>
                   </q-select>
 
+                  <div v-if="control.control_type === 'CMP'" class="col">
+                    <comparison-output-table-box
+                      class="col"
+                      v-model="this.cmpOutputTable"
+                      :datasource-a-columns="this.datasourceAColumns"
+                      :datasource-b-columns="this.datasourceBColumns">
+                    </comparison-output-table-box>
+                  </div>
+
                   <q-select
-                    v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
+                    v-if="control.control_type === 'REC'"
                     class="col"
                     outlined
                     clearable
@@ -402,7 +411,7 @@
                   </q-select>
 
                   <q-select
-                    v-if="control.control_type === 'REC' || control.control_type === 'CMP'"
+                    v-if="control.control_type === 'REC'"
                     class="col"
                     outlined
                     clearable
@@ -813,34 +822,40 @@
                       <td class="text-right">{{ control_log.prerequisite_value }}</td>
                       <td class="text-left">
                         <q-chip class="cursor-pointer">
-                <q-avatar v-if="control_log.status == 'I'" icon="fas fa-play-circle" color="blue" text-color="white" />
-                <q-avatar v-if="control_log.status == 'E'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
-                <q-avatar v-if="control_log.status == 'R' || control_log.status == 'P' || control_log.status == 'F'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
-                <q-avatar v-if="control_log.status == 'S'" icon="fas fa-minus-circle" color="deep-orange-4" text-color="white" />
-                <q-avatar v-if="control_log.status == 'D'" icon="fas fa-check-circle" color="green" text-color="white" />
-                <q-avatar v-if="control_log.status == 'X'" icon="fas fa-times-circle" color="grey" text-color="white" />
-                <q-avatar v-if="!control_log.status || control_log.status == 'C'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
-                <q-avatar v-if="control_log.status == 'W'" icon="fas fa-hourglass-half" color="amber-7" text-color="white" />
-                {{
-                  control_log.status === "E"
-                    ? "Error"
-                    : (control_log.status == 'R' || control_log.status == 'P' || control_log.status == 'F')
-                    ? "Running"
-                    : control_log.status === "D"
-                    ? "Success"
-                    : control_log.status === "S"
-                    ? "Terminated"
-                    : control_log.status === "I"
-                    ? "Initialized"
-                    : control_log.status === "X"
-                    ? "Revoked"
-                    : (!control_log.status || control_log.status === "C")
-                    ? "Cancelled"
-                    : control_log.status === "W"
-                    ? "Waiting"
-                    : "Unknown"
-                }}
-              </q-chip>
+                          <q-avatar v-if="control_log.status == 'I'" icon="fas fa-plus-circle" color="indigo" text-color="white" />
+                          <q-avatar v-if="control_log.status == 'W'" icon="fas fa-pause-circle" color="amber-7" text-color="white" />
+                          <q-avatar v-if="control_log.status == 'S'" icon="fas fa-play-circle" color="blue" text-color="white" />
+                          <q-avatar v-if="control_log.status == 'P'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
+                          <q-avatar v-if="control_log.status == 'F'" icon="fas fa-circle-notch fa-spin" color="blue" text-color="white" />
+                          <q-avatar v-if="control_log.status == 'D'" icon="fas fa-check-circle" color="green" text-color="white" />
+                          <q-avatar v-if="control_log.status == 'C'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
+                          <q-avatar v-if="control_log.status == 'E'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
+                          <q-avatar v-if="control_log.status == 'X'" icon="fas fa-times-circle" color="grey" text-color="white" />
+                          <q-avatar v-if="!control_log.status" icon="fas fa-times-circle" color="deep-purple-3" text-color="white" />
+                          {{
+                            control_log.status === "I"
+                              ? "Initiated"
+                              : control_log.status === "W"
+                              ? "Waiting"
+                              : control_log.status === "S"
+                              ? "Started"
+                              : control_log.status == "P"
+                              ? "Running"
+                              : control_log.status === "F"
+                              ? "Finishing"
+                              : control_log.status === "D"
+                              ? "Done"
+                              : control_log.status === "E"
+                              ? "Error"
+                              : control_log.status === "C"
+                              ? "Cancelled"
+                              : control_log.status === "X"
+                              ? "Revoked"
+                              : !control_log.status
+                              ? "Void"
+                              : "Unknown"
+                          }}
+                        </q-chip>
                       </td>
                     </tr>
                   </tbody>
@@ -877,6 +892,7 @@ import CaseConfigBox from "./CaseConfigBox.vue";
 import IterationConfigBox from "./IterationConfigBox.vue";
 import ComparisonMatchCriteriaBox from "./ComparisonMatchCriteriaBox.vue";
 import ComparisonMisMatchCriteriaBox from "./ComparisonMisMatchCriteriaBox.vue";
+import ComparisonOutputTableBox from "./ComparisonOutputTableBox.vue";
 
 export default {
   components: {
@@ -889,6 +905,7 @@ export default {
     IterationConfigBox,
     ComparisonMatchCriteriaBox,
     ComparisonMisMatchCriteriaBox,
+    ComparisonOutputTableBox,
   },
   props: {
     controlId: {
@@ -924,6 +941,7 @@ export default {
         sec: "0",
       },
       ruleConfigObject: {},
+      cmpOutputTable: [],
       ruleErrorObject: null,
       caseConfigObject: [],
       iterationConfigObject: [],
@@ -1385,37 +1403,23 @@ export default {
 
       // CMP rule
       if (this.control.control_type === "CMP") {
-        if (!this.control.output_table_a_columns) {
-          this.control.output_table_a = null;
-        } else {
-          this.control.output_table_a = JSON.stringify({
-            columns: this.control.output_table_a_columns,
-          });
-        }
-
-        if (!this.control.output_table_b_columns) {
-          this.control.output_table_b = null;
-        } else {
-          this.control.output_table_b = JSON.stringify({
-            columns: this.control.output_table_b_columns,
-          });
-        }
+        this.control.output_table_a = null;
+        this.control.output_table_b = null;
 
         this.control.output_table = [];
-        if (this.control.output_table_a_columns) {
-          for (const out_field of this.control.output_table_a_columns) {
-            this.control.output_table.push({ column_a: out_field });
+        // iterate over cmpOutputTable array and for each object elements - remove elements with value null and upercase those with values not null
+        this.cmpOutputTable.forEach((element) => {
+          for (const key in element) {
+            if (element[key] === null) {
+              delete element[key];
+            } else {
+              element[key] = element[key].toUpperCase();
+            }
           }
-        }
-
-        if (this.control.output_table_b_columns) {
-          for (const out_field of this.control.output_table_b_columns) {
-            this.control.output_table.push({ column_b: out_field });
-          }
-        }
+        });
 
         this.control.output_table = JSON.stringify({
-          columns: this.control.output_table,
+          columns: this.cmpOutputTable,
         });
 
         this.control.error_definition = JSON.stringify(this.ruleErrorObject);
@@ -1644,7 +1648,7 @@ export default {
           }
           this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
           this.getDatasourceColumns(this.control.source_name, "date").then((data) => (this.datasourceDateColumns = data));
-        } else if (this.control.control_type === "REC" || this.control.control_type === "CMP") {
+        } else if (this.control.control_type === "REC") {
           if (this.control["output_table_a"]) {
             this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
           }
@@ -1658,6 +1662,25 @@ export default {
           this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
           this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
           this.getDatasourceColumns(this.control.source_name_b, "numeric").then((data) => (this.datasourceBNumColumns = data));
+        } else if (this.control.control_type === "CMP") {
+          if (this.control["output_table"]) {
+            this.cmpOutputTable = JSON.parse(this.control["output_table"]).columns;
+            this.cmpOutputTable.forEach((element) => {
+              for (const key in element) {
+                if (element[key] === null) {
+                  delete element[key];
+                } else {
+                  element[key] = element[key].toUpperCase();
+                }
+              }
+            });
+          }
+
+          this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
+          this.getDatasourceColumns(this.control.source_name_a, "date").then((data) => (this.datasourceADateColumns = data));
+
+          this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
+          this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
         }
 
         if (this.control.rule_config) {

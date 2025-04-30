@@ -118,31 +118,37 @@
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.prerequisite_value }}</td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-chip class="cursor-pointer">
-                <q-avatar v-if="control.status == 'I'" icon="fas fa-play-circle" color="blue" text-color="white" />
-                <q-avatar v-if="control.status == 'E'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
-                <q-avatar v-if="control.status == 'R' || control.status == 'P' || control.status == 'F'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
-                <q-avatar v-if="control.status == 'S'" icon="fas fa-minus-circle" color="deep-orange-4" text-color="white" />
+                <q-avatar v-if="control.status == 'I'" icon="fas fa-plus-circle" color="indigo" text-color="white" />
+                <q-avatar v-if="control.status == 'W'" icon="fas fa-pause-circle" color="amber-7" text-color="white" />
+                <q-avatar v-if="control.status == 'S'" icon="fas fa-play-circle" color="blue" text-color="white" />
+                <q-avatar v-if="control.status == 'P'" icon="fas fa-sync fa-spin" color="blue" text-color="white" />
+                <q-avatar v-if="control.status == 'F'" icon="fas fa-circle-notch fa-spin" color="blue" text-color="white" />
                 <q-avatar v-if="control.status == 'D'" icon="fas fa-check-circle" color="green" text-color="white" />
+                <q-avatar v-if="control.status == 'C'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
+                <q-avatar v-if="control.status == 'E'" icon="fas fa-exclamation-circle" color="deep-orange" text-color="white" />
                 <q-avatar v-if="control.status == 'X'" icon="fas fa-times-circle" color="grey" text-color="white" />
-                <q-avatar v-if="!control.status || control.status == 'C'" icon="fas fa-times-circle" color="purple-3" text-color="white" />
-                <q-avatar v-if="control.status == 'W'" icon="fas fa-hourglass-half" color="amber-7" text-color="white" />
+                <q-avatar v-if="!control.status" icon="fas fa-times-circle" color="deep-purple-3" text-color="white" />
                 {{
-                  control.status === "E"
-                    ? "Error"
-                    : (control.status == 'R' || control.status == 'P' || control.status == 'F')
-                    ? "Running"
-                    : control.status === "D"
-                    ? "Success"
-                    : control.status === "S"
-                    ? "Terminated"
-                    : control.status === "I"
-                    ? "Initialized"
-                    : control.status === "X"
-                    ? "Revoked"
-                    : (!control.status || control.status === "C")
-                    ? "Cancelled"
+                  control.status === "I"
+                    ? "Initiated"
                     : control.status === "W"
                     ? "Waiting"
+                    : control.status === "S"
+                    ? "Started"
+                    : control.status == "P"
+                    ? "Running"
+                    : control.status === "F"
+                    ? "Finishing"
+                    : control.status === "D"
+                    ? "Done"
+                    : control.status === "E"
+                    ? "Error"
+                    : control.status === "C"
+                    ? "Cancelled"
+                    : control.status === "X"
+                    ? "Revoked"
+                    : !control.status
+                    ? "Void"
                     : "Unknown"
                 }}
               </q-chip>
@@ -164,7 +170,7 @@
                       <q-item-section> Revoke run </q-item-section>
                     </q-item>
                     <q-item
-                      v-if="control.status == 'R' || control.status == 'I'"
+                      v-if="control.status == 'F' || control.status == 'I' || control.status == 'W' || control.status == 'S' || control.status == 'P'"
                       dense
                       clickable
                       class="col items-center"
@@ -176,7 +182,7 @@
                       <q-item-section> Show error log </q-item-section>
                     </q-item>
                     <q-item dense clickable @click="dropTemporaryTables(control)" v-close-popup>
-                      <q-item-section> Drop TEMP tables </q-item-section>
+                      <q-item-section> Drop temporary tables </q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -258,7 +264,7 @@ export default {
     showErrorDialog(control) {
       this.$q.dialog({
         title: control.control_name + " - Error log",
-        message: "<div class='text-body2' style='font-family: monospace;'>" + control.text_error.replace(/\n/g, "<br>$&") + "</div>",
+        message: control.text_error ? ("<div class='text-body2' style='font-family: monospace;'>" + control.text_error.replace(/\n/g, "<br>$&") + "</div>") : "No error log available",
         html: true,
         style: {
           width: "800px", // Adjust the width as needed
