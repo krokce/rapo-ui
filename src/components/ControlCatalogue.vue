@@ -145,11 +145,20 @@
                     <q-separator />
                     <confirm-dialog
                       icon="fas fa-trash-alt"
+                      text="Recreate result tables? Past discrepancies will be deleted!"
+                      :action="recreateSchema"
+                      :argument="control.control_name">
+                      <q-item dense clickable>
+                        <q-item-section> Recreate schema </q-item-section>
+                      </q-item>
+                    </confirm-dialog>
+                    <confirm-dialog
+                      icon="fas fa-trash-alt"
                       text="Do you really want to delete this control?"
                       :action="deleteControl"
                       :argument="control.control_id">
                       <q-item dense clickable>
-                        <q-item-section> Delete </q-item-section>
+                        <q-item-section> Delete control </q-item-section>
                       </q-item>
                     </confirm-dialog>
                   </q-list>
@@ -205,6 +214,24 @@ export default {
         .then(() => {
           this.$q.loadingBar.stop();
           this.updateControlCatalogue();
+        });
+    },
+    recreateSchema(control_name) {
+      this.$q.loadingBar.start();
+
+      fetch("/api/delete-control-output-tables?name=" + control_name, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+      })
+        .then((response) => {
+          if (response.ok) {
+            this.$q.notify({ type: "positive", message: "Schema for " + control_name + " was deleted. It will be recreated on the next run." });
+          } else {
+            this.$q.notify({ type: "negative", message: "Schema deletion for " + control_name + "' failed" });
+          }
+        })
+        .then(() => {
+          this.$q.loadingBar.stop();
         });
     },
     toDateTimeString(val) {

@@ -381,7 +381,11 @@
                     stack-label
                     label="Select output (leave empty for all columns)">
                     <template v-slot:prepend>
-                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns()" />
+                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns()">
+                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                          Get all columns
+                        </q-tooltip>
+                      </q-icon>
                     </template>
                   </q-select>
 
@@ -406,7 +410,11 @@
                     stack-label
                     label="Select output A-side (leave empty for all columns)">
                     <template v-slot:prepend>
-                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('A')" />
+                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('A')">
+                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                          Get all columns
+                        </q-tooltip>
+                      </q-icon>
                     </template>
                   </q-select>
 
@@ -422,7 +430,11 @@
                     stack-label
                     label="Select output B-side (leave empty for all columns)">
                     <template v-slot:prepend>
-                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('B')" />
+                      <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('B')">
+                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                          Get all columns
+                        </q-tooltip>
+                      </q-icon>
                     </template>
                   </q-select>
                 </div>
@@ -1577,7 +1589,7 @@ export default {
       this.$q
         .dialog({
           title: control.control_name,
-          message: "All control results will be deleted! Do you really want to recreate result tables?",
+          message: "Recreate result tables? Past discrepancies will be deleted!",
           cancel: true,
           persistent: true,
         })
