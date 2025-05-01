@@ -48,7 +48,6 @@ export default {
         if (this.rememberToken) {
           this.$q.cookies.set("rapo_token", token, { SameSite: "Strict", expires: "365d" });
         }
-        console.log(this.redirectPath);
         this.$router.push(this.redirectPath);
       }
 

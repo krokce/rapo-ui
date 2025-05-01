@@ -382,9 +382,7 @@
                     label="Select output (leave empty for all columns)">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns()">
-                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-                          Get all columns
-                        </q-tooltip>
+                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Get all columns </q-tooltip>
                       </q-icon>
                     </template>
                   </q-select>
@@ -411,9 +409,7 @@
                     label="Select output A-side (leave empty for all columns)">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('A')">
-                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-                          Get all columns
-                        </q-tooltip>
+                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Get all columns </q-tooltip>
                       </q-icon>
                     </template>
                   </q-select>
@@ -431,9 +427,7 @@
                     label="Select output B-side (leave empty for all columns)">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-columns" @click.stop.prevent="populateColumns('B')">
-                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-                          Get all columns
-                        </q-tooltip>
+                        <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Get all columns </q-tooltip>
                       </q-icon>
                     </template>
                   </q-select>
@@ -922,7 +916,7 @@ export default {
   props: {
     controlId: {
       type: String,
-      default: "t",
+      default: "new",
     },
   },
   data() {
@@ -1204,10 +1198,7 @@ export default {
         }
       }
     },
-    controlVersionChanged() {
-      this.control = this.controlVersion;
-      this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
-
+    initializeControl() {
       try {
         if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
           if (this.control["output_table"]) {
@@ -1278,21 +1269,42 @@ export default {
           }
         }
 
+        if (this.control.schedule_config) {
+          this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
+        } else {
+          this.scheduleObject = {
+            mday: null,
+            wday: null,
+            hour: "8",
+            min: "15",
+            sec: "0",
+          };
+        }
+
         if (this.control.error_definition && this.control.control_type == "CMP") {
           this.ruleErrorObject = JSON.parse(this.control.error_definition);
         }
 
         if (this.control.case_config) {
           this.caseConfigObject = JSON.parse(this.control.case_config);
+        } else {
+          this.caseConfigObject = [];
         }
+
         if (this.control.iteration_config) {
           this.iterationConfigObject = JSON.parse(this.control.iteration_config);
+        } else {
+          this.iterationConfigObject = [];
         }
+
+        this.withDeleteionDrop = this.control.with_drop === "Y" ? "drop" : this.control.with_deletion === "Y" ? "deletion" : "N";
       } catch (err) {
         console.log(err);
       }
-
-      this.withDeleteionDrop = this.control.with_drop === "Y" ? "drop" : this.control.with_deletion === "Y" ? "deletion" : "N";
+    },
+    controlVersionChanged() {
+      this.control = this.controlVersion;
+      this.initializeControl();
     },
     deletionDropChanged() {
       if (this.withDeleteionDrop === "N") {
@@ -1379,11 +1391,6 @@ export default {
 
       this.control.schedule_config = this.toScheduleString(this.scheduleObject);
 
-      // this.control.rule_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.rule_config);
-      // this.control.error_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.error_config);
-      // this.control.case_config = this.addNewLineIfLastLineStartsWithDoubleDash(this.control.case_config);
-
-      // Stringify the JSON obejcts holding the columns values
       // ANL rule
       if (this.control.control_type === "ANL") {
         if (!this.control.output_table_columns) {
@@ -1458,7 +1465,9 @@ export default {
         this.control.output_table_b = null;
 
         this.control.output_table = [];
-        // iterate over cmpOutputTable array and for each object elements - remove elements with value null and upercase those with values not null
+
+        // iterate over cmpOutputTable array and for each object elements
+        // remove elements with value null and upercase those with values not null
         this.cmpOutputTable.forEach((element) => {
           for (const key in element) {
             if (element[key] === null) {
@@ -1682,9 +1691,7 @@ export default {
     if (controlData) {
       this.control = controlData;
       this.getControlVersions(this.controlId);
-      this.getControlLogs(this.control.control_name, 7);
-
-      this.scheduleObject = this.toScheduleObject(this.control.schedule_config);
+      this.getControlLogs(this.control.control_name, this.log_days_back);
 
       // Force insert instead of update if clone
       if (this.$route.query.clone) {
@@ -1692,91 +1699,7 @@ export default {
         this.control.control_name = this.control.control_name + "_CLONE";
       }
 
-      try {
-        if (this.control.control_type === "ANL" || this.control.control_type === "REP") {
-          if (this.control["output_table"]) {
-            this.control.output_table_columns = JSON.parse(this.control["output_table"]).columns;
-          }
-          this.getDatasourceColumns(this.control.source_name).then((data) => (this.datasourceColumns = data));
-          this.getDatasourceColumns(this.control.source_name, "date").then((data) => (this.datasourceDateColumns = data));
-        } else if (this.control.control_type === "REC") {
-          if (this.control["output_table_a"]) {
-            this.control.output_table_a_columns = JSON.parse(this.control["output_table_a"]).columns;
-          }
-          this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
-          this.getDatasourceColumns(this.control.source_name_a, "date").then((data) => (this.datasourceADateColumns = data));
-          this.getDatasourceColumns(this.control.source_name_a, "numeric").then((data) => (this.datasourceANumColumns = data));
-
-          if (this.control["output_table_b"]) {
-            this.control.output_table_b_columns = JSON.parse(this.control["output_table_b"]).columns;
-          }
-          this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
-          this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
-          this.getDatasourceColumns(this.control.source_name_b, "numeric").then((data) => (this.datasourceBNumColumns = data));
-        } else if (this.control.control_type === "CMP") {
-          if (this.control["output_table"]) {
-            this.cmpOutputTable = JSON.parse(this.control["output_table"]).columns;
-            this.cmpOutputTable.forEach((element) => {
-              for (const key in element) {
-                if (element[key] === null) {
-                  delete element[key];
-                } else {
-                  element[key] = element[key].toUpperCase();
-                }
-              }
-            });
-          }
-
-          this.getDatasourceColumns(this.control.source_name_a).then((data) => (this.datasourceAColumns = data));
-          this.getDatasourceColumns(this.control.source_name_a, "date").then((data) => (this.datasourceADateColumns = data));
-
-          this.getDatasourceColumns(this.control.source_name_b).then((data) => (this.datasourceBColumns = data));
-          this.getDatasourceColumns(this.control.source_name_b, "date").then((data) => (this.datasourceBDateColumns = data));
-        }
-
-        if (this.control.rule_config) {
-          this.ruleConfigObject = JSON.parse(this.control.rule_config);
-        } else {
-          if (this.control.control_type === "REC") {
-            this.ruleConfigObject = {
-              need_issues_a: true,
-              need_issues_b: true,
-              need_recons_a: false,
-              need_recons_b: false,
-              allow_duplicates: false,
-              time_shift_from: 0,
-              time_shift_to: 0,
-              time_tolerance_from: 0,
-              time_tolerance_to: 0,
-              correlation_config: [],
-              discrepancy_config: [],
-            };
-          } else if (this.control.control_type === "CMP") {
-            this.ruleConfigObject = [];
-          } else if (this.control.control_type === "REP") {
-            this.ruleConfigObject = null;
-          } else if (this.control.control_type === "ANL") {
-            this.ruleConfigObject = null;
-          } else {
-            this.ruleConfigObject = null;
-          }
-        }
-
-        if (this.control.error_definition && this.control.control_type == "CMP") {
-          this.ruleErrorObject = JSON.parse(this.control.error_definition);
-        }
-
-        if (this.control.case_config) {
-          this.caseConfigObject = JSON.parse(this.control.case_config);
-        }
-        if (this.control.iteration_config) {
-          this.iterationConfigObject = JSON.parse(this.control.iteration_config);
-        }
-      } catch (err) {
-        console.log(err);
-      }
-
-      this.withDeleteionDrop = this.control.with_drop === "Y" ? "drop" : this.control.with_deletion === "Y" ? "deletion" : "N";
+      this.initializeControl();
     } else {
       // NEW CONTROL
       this.control = {

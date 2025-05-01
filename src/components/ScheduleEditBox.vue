@@ -342,12 +342,17 @@ export default {
     },
   },
   watch: {
-    scheduleObject(newValue) {
-      this.$emit("update:modelValue", newValue);
+    scheduleObject: {
+      handler(newValue) {
+        this.$emit("update:modelValue", newValue);
+      },
+      deep: true,
     },
-    modelValue(newValue) {
-      // this.schedule = newValue;
-      this.scheduleObject = newValue;
+    modelValue: {
+      handler(newValue) {
+        this.scheduleObject = newValue;
+      },
+      deep: true,
     },
   },
   mounted() {

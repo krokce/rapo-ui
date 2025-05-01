@@ -35,10 +35,17 @@ const router = createRouter({
     },
     {
       name: "edit-control",
-      path: "/edit-control/:controlId",
+      path: "/edit-control/:controlId?",
       meta: { hideSearch: true },
       component: ControlEdit,
       props: true,
+      beforeEnter: (to, from, next) => {
+        if (!to.params.controlId) {
+          next({ path: "/controls" }); // Redirect to controls if controlId is undefined
+        } else {
+          next();
+        }
+      },
     },
     {
       name: "token",
