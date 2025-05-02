@@ -933,7 +933,7 @@ export default {
       tab: "main",
       control: {},
       controlVersions: [],
-      controlVersion: "ACTUAL",
+      // controlVersion: "ACTUAL",
       log_days_back: 7,
       datasourceColumns: null,
       datasourceDateColumns: null,
@@ -1003,7 +1003,7 @@ export default {
         return;
       }
       this.$q.dialog({
-        title: this.control.control_name + " | " + " v." + this.controlVersion.label,
+        title: this.control.control_name + " | " + this.controlVersion.label,
         message: "<pre>" + this.formattedJSON(this.versionChanges) + "</pre>",
         html: true,
         style: {
@@ -1163,10 +1163,11 @@ export default {
         const data = await response.json();
         this.controlVersions = data;
         this.controlVersions.forEach((element) => {
-          element.label = new Date(element.audit_date).toISOString("de-DE").substring(0, 19).replace("T", " ");
+          element.label = "v." + new Date(element.updated_date ? element.updated_date : element.created_date).toISOString("de-DE").substring(0, 19).replace("T", " ");
         });
-        this.control.label = "ACTUAL";
+        this.control.label = "v." + new Date(this.control.updated_date ? this.control.updated_date : this.control.created_date).toISOString("de-DE").substring(0, 19).replace("T", " ");
         this.controlVersions.unshift(this.control);
+        this.controlVersion = this.controlVersions[0];
       }
     },
     async getControlLogs(controlName, numberDays) {
@@ -1332,7 +1333,7 @@ export default {
       // iterate through oldVersion and this.control and locate differences and create an array of changes
       this.versionChanges = [];
       for (const key in oldVersion) {
-        if (oldVersion[key] !== this.control[key] && key !== "label" && key !== "audit_date" && key !== "updated_date") {
+        if (oldVersion[key] !== this.control[key] && key !== "label" && key !== "audit_date" && key !== "updated_date" && key !== "updated_by") {
           this.versionChanges.push({
             field: key,
             oldValue: oldVersion[key],
