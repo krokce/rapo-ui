@@ -1,6 +1,13 @@
 <template>
   <q-page>
-    <h2 class="row">Last control result<span v-if="filteredControlResultsLen != 1">s</span></h2>
+    <h2 class="row q-gutter-lg">
+      <div>Last control result<span v-if="filteredControlResultsLen != 1">s</span></div>
+      <div v-if="controlResults.length === 0">
+        <q-avatar size="lg" color="grey-5">
+          <q-icon name="fas fa-sync fa-spin" />
+        </q-avatar>
+      </div>
+    </h2>
 
     <div class="q-pa-md">
       <q-markup-table dense>
@@ -157,7 +164,7 @@
               <q-btn size="sm" color="grey-7" round flat icon="fas fa-ellipsis-v">
                 <q-menu>
                   <q-list dense class="text-no-wrap">
-                    <run-control-dialog :control="control" :hook="updateControlResults">
+                    <run-control-dialog :control="control" :hook="refreshControlResults">
                       <q-item dense clickable class="col items-center">
                         <q-item-section> Run control </q-item-section>
                       </q-item>
@@ -213,6 +220,7 @@ export default {
         rowsPerPage: 0,
       },
       refreshTimer: null,
+      controlResults: [],
     };
   },
   methods: {
@@ -264,7 +272,9 @@ export default {
     showErrorDialog(control) {
       this.$q.dialog({
         title: control.control_name + " - Error log",
-        message: control.text_error ? ("<div class='text-body2' style='font-family: monospace;'>" + control.text_error.replace(/\n/g, "<br>$&") + "</div>") : "No error log available",
+        message: control.text_error
+          ? "<div class='text-body2' style='font-family: monospace;'>" + control.text_error.replace(/\n/g, "<br>$&") + "</div>"
+          : "No error log available",
         html: true,
         style: {
           width: "800px", // Adjust the width as needed
@@ -361,21 +371,36 @@ export default {
           // console.log('Cancel')
         });
     },
-    startRefreshTimer() {
-      this.refreshTimer = setInterval(this.updateControlResults, 10000);
+    async refreshControlResults() {
+      this.controlResults = await this.updateControlResults();
+    },
+    async startRefreshTimer() {
+      this.refreshTimer = setInterval(this.refreshControlResults, 10000);
     },
     stopRefreshTimer() {
       clearInterval(this.refreshTimer);
     },
   },
   computed: {
-    ...mapGetters(["filteredControlResults", "getSearch"]),
+    ...mapGetters(["getSearch"]),
+    filteredControlResults() {
+      const s = this.getSearch;
+      var data = this.controlResults;
+      if (s) {
+        data = this.controlResults.filter(
+          (item) =>
+            (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false) ||
+            (item.control_desc ? item.control_desc.toUpperCase().indexOf(s.toUpperCase()) > -1 : false)
+        );
+      }
+      return data;
+    },
     filteredControlResultsLen() {
       return this.filteredControlResults.length;
     },
   },
-  mounted() {
-    this.updateControlResults();
+  async mounted() {
+    this.controlResults = await this.updateControlResults();
     this.startRefreshTimer();
   },
   unmounted() {

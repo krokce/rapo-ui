@@ -1,6 +1,13 @@
 <template>
   <q-page>
-    <h2 class="row">{{ filteredControlCatalogueLen }} Control<span v-if="filteredControlCatalogueLen != 1">s</span></h2>
+    <h2 class="row q-gutter-lg">
+      <div>{{ filteredControlCatalogueLen }} Control<span v-if="filteredControlCatalogueLen != 1">s</span></div>
+      <div v-if="controlCatalogue.length === 0">
+        <q-avatar size="lg" color="grey-5">
+          <q-icon name="fas fa-sync fa-spin" />
+        </q-avatar>
+      </div>
+    </h2>
 
     <q-btn class="q-my-lg" size="lg" color="primary" icon="fas fa-plus" label="New control" :to="{ name: 'edit-control', params: { controlId: 'new' } }" />
 
@@ -50,7 +57,7 @@
                 <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>
               </div>
             </td>
-            <td class="text-left">
+            <td class="text-left" style="width: 100%">
               <div style="white-space: normal; word-wrap: break-word">
                 {{ control.control_description }}
               </div>
@@ -170,6 +177,7 @@
       </q-markup-table>
     </div>
   </q-page>
+  {{ this.getSearch }}
 </template>
 
 <script>
@@ -190,6 +198,7 @@ export default {
       isHovered: false,
       confirmDialog: false,
       $q: useQuasar(),
+      controlCatalogue: [],
     };
   },
   methods: {
@@ -240,13 +249,25 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["filteredControlCatalogue"]),
+    ...mapGetters(["getSearch"]),
+    filteredControlCatalogue() {
+      const s = this.getSearch;
+      var data = this.controlCatalogue;
+      if (s) {
+        data = this.controlCatalogue.filter(
+          (item) =>
+            (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false) ||
+            (item.control_desc ? item.control_desc.toUpperCase().indexOf(s.toUpperCase()) > -1 : false)
+        );
+      }
+      return data;
+    },
     filteredControlCatalogueLen() {
-      return this.filteredControlCatalogue.length;
+      return this.controlCatalogue.length;
     },
   },
-  mounted() {
-    this.updateControlCatalogue();
+  async mounted() {
+    this.controlCatalogue = await this.updateControlCatalogue();
   },
 };
 </script>
