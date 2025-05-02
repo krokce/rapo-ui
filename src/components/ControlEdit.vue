@@ -933,7 +933,7 @@ export default {
       tab: "main",
       control: {},
       controlVersions: [],
-      // controlVersion: "ACTUAL",
+      controlVersion: null,
       log_days_back: 7,
       datasourceColumns: null,
       datasourceDateColumns: null,
@@ -1341,8 +1341,6 @@ export default {
           });
         }
       }
-      console.log("Changes:", this.versionChanges);
-
       this.initializeControl();
     },
     deletionDropChanged() {

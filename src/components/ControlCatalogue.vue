@@ -203,27 +203,21 @@ export default {
   },
   methods: {
     ...mapActions(["updateControlCatalogue"]),
-    deleteControl(control_id) {
+    async deleteControl(control_id) {
       this.$q.loadingBar.start();
 
-      this.$router.push({ name: "controls" });
-
-      fetch("/api/delete-control?control_id=" + control_id, {
+      const response = await fetch("/api/delete-control?control_id=" + control_id, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
-      })
-        .then((response) => {
-          if (response.ok) {
-            this.$q.notify({ type: "positive", message: "Control deleted" });
-            return response.json();
-          } else {
-            this.$q.notify({ type: "negative", message: "Unable to delete control" });
-          }
-        })
-        .then(() => {
-          this.$q.loadingBar.stop();
-          this.updateControlCatalogue();
-        });
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      this.controlCatalogue = await this.updateControlCatalogue();
+      this.$q.loadingBar.stop();
+      this.$router.push({ name: "controls" });
     },
     recreateSchema(control_name) {
       this.$q.loadingBar.start();
