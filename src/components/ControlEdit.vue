@@ -72,7 +72,16 @@
                     @filter="filterDatasourceList"
                     @update:model-value="controlVersionChanged">
                     <template v-slot:prepend>
-                      <q-icon name="fas fa-tag" size="sm" @click.stop.prevent />
+                      <q-icon
+                        name="fas fa-tag"
+                        size="sm"
+                        @click="showVersionChanges"
+                        @click.stop.prevent
+                        class="cursor-pointer"
+                        :class="{ 'text-deep-orange-4': this.versionChanges.length }">
+                        <q-badge rounded size="xs" v-if="versionChanges.length" color="green" floating>{{ versionChanges.length }}</q-badge>
+                        <q-tooltip v-if="this.versionChanges.length" anchor="top left" self="bottom left" :offset="[0, 5]"> Show changes </q-tooltip>
+                      </q-icon>
                     </template>
                     <template v-slot:no-option>
                       <q-item>
@@ -94,10 +103,10 @@
                     map-options
                     v-model="control.control_type"
                     :options="[
-                      { label: 'REC - Reconciliation', value: 'REC' },
                       { label: 'ANL - Analysis', value: 'ANL' },
-                      { label: 'REP - Report', value: 'REP' },
+                      { label: 'REC - Reconciliation', value: 'REC' },
                       { label: 'CMP - Comparison', value: 'CMP' },
+                      { label: 'REP - Report', value: 'REP' },
                       // { label: 'Key Performance Indicator', value: 'KPI' },
                     ]"
                     label="Control type"
@@ -952,6 +961,7 @@ export default {
       caseConfigObject: [],
       iterationConfigObject: [],
       controlLogs: [],
+      versionChanges: [],
       $q: useQuasar(),
     };
   },
@@ -988,8 +998,22 @@ export default {
         },
       });
     },
+    showVersionChanges() {
+      if (!this.versionChanges.length) {
+        return;
+      }
+      this.$q.dialog({
+        title: this.control.control_name + " | " + " v." + this.controlVersion.label,
+        message: "<pre>" + this.formattedJSON(this.versionChanges) + "</pre>",
+        html: true,
+        style: {
+          width: "800px", // Adjust the width as needed
+          maxWidth: "90vw", // Optional: Ensure it doesn't exceed viewport width
+        },
+      });
+    },
     formattedJSON(control) {
-      return JSON.stringify(control, null, 2);
+      return JSON.stringify(control, null, 2).replace(/\\"/g, "'");
     },
     filterDatasourceList(val, update, abort) {
       if (val.length < 0) {
@@ -1303,7 +1327,21 @@ export default {
       }
     },
     controlVersionChanged() {
+      var oldVersion = this.controlVersions[0];
       this.control = this.controlVersion;
+      // iterate through oldVersion and this.control and locate differences and create an array of changes
+      this.versionChanges = [];
+      for (const key in oldVersion) {
+        if (oldVersion[key] !== this.control[key] && key !== "label" && key !== "audit_date" && key !== "updated_date") {
+          this.versionChanges.push({
+            field: key,
+            oldValue: oldVersion[key],
+            newValue: this.control[key],
+          });
+        }
+      }
+      console.log("Changes:", this.versionChanges);
+
       this.initializeControl();
     },
     deletionDropChanged() {
