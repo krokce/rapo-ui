@@ -164,11 +164,15 @@
               <q-btn size="sm" color="grey-7" round flat icon="fas fa-ellipsis-v">
                 <q-menu>
                   <q-list dense class="text-no-wrap">
+                    <q-item dense clickable @click="reRun(control)" v-close-popup>
+                      <q-item-section> Re-run </q-item-section>
+                    </q-item>
                     <run-control-dialog :control="control" :hook="refreshControlResults">
                       <q-item dense clickable class="col items-center">
-                        <q-item-section> Run control </q-item-section>
+                        <q-item-section> Run </q-item-section>
                       </q-item>
                     </run-control-dialog>
+                    <q-separator />
                     <q-item dense clickable @click="navigateToEditControl(control)">
                       <q-item-section> Edit control </q-item-section>
                     </q-item>
@@ -281,6 +285,50 @@ export default {
           maxWidth: "90vw", // Optional: Ensure it doesn't exceed viewport width
         },
       });
+    },
+    reRun(control) {
+      console.log("Re-run control: " + JSON.stringify(control));
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message:
+            "Re-run for '" +
+            this.toDateString(control.date_from) +
+            "'" +
+            (control.date_from != control.date_to ? " - '" + this.toDateString(control.date_to) + "'" : "") +
+            "?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          var url =
+            "/api/run-control?name=" +
+            control.control_name +
+            "&date_from=" +
+            this.toDateString(control.date_from) +
+            "&date_to=" +
+            this.toDateString(control.date_to);
+          fetch(url, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "Control " + control.control_name + " queued for execution" });
+                return response.json();
+              } else {
+                this.$q.notify({ type: "negative", message: "Control " + control.control_name + " failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+              this.refreshControlResults();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
     },
     showCancelDialog(control) {
       this.$q
