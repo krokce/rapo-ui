@@ -12,8 +12,9 @@
           { label: 'Weekly', value: 'W' },
           { label: 'Monthly', value: 'M' },
           { label: 'Complex', value: 'X' },
+          { label: 'Cascade', value: 'C' },
         ]"
-        label="Schedule type"
+        label="Scheduler type"
         @update:model-value="scheduleTypeChanged" />
 
       <q-input class="col" outlined v-model="scheduleObject.mday" label="Month" v-if="scheduleType === 'X'">
@@ -49,6 +50,8 @@
           </q-btn>
         </template>
       </q-input>
+
+      <q-icon class="q-mt-lg" name="fas fa-at" size="35px" color="blue-grey-3" />
 
       <q-select
         v-if="scheduleType == 'W'"
@@ -135,7 +138,22 @@
         </template>
       </q-select>
 
-      <q-icon class="q-mt-lg" name="fas fa-at" size="35px" color="blue-grey-3" />
+      <q-select
+        v-if="scheduleType === 'C'"
+        class="col"
+        use-input
+        hide-selected
+        fill-input
+        outlined
+        emit-value
+        map-options
+        @filter="filterControlCatalogue"
+        v-model="scheduleObject.trigger_id"
+        :options="controlCatalogueList.map((control) => ({ label: control.control_name, value: control.control_id }))"
+        :selected-value="controlCatalogueList.find((control) => control.control_id == scheduleObject.trigger_id)?.control_name || scheduleObject.trigger_id"
+        label="Control (trigger)"
+        :rules="[(val) => (val && val > 0) || 'You must select a control']">
+      </q-select>
 
       <q-input
         class="col"
@@ -206,7 +224,14 @@
         </template>
       </q-input>
 
-      <q-input v-if="scheduleType !== 'X'" class="col" outlined v-model="scheduleTimepicker" mask="fulltime" @update:model-value="scheduleDateTimeChanged">
+      <q-input
+        v-if="scheduleType !== 'X' && scheduleType !== 'C'"
+        class="col"
+        outlined
+        v-model="scheduleTimepicker"
+        mask="fulltime"
+        :rules="[(val) => /^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(val) || 'Must be a valid time (HH:mm:ss) format']"
+        @update:model-value="scheduleDateTimeChanged">
         <template v-slot:append>
           <q-icon name="access_time" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
@@ -224,6 +249,8 @@
 </template>
 
 <script>
+import { mapActions } from "vuex";
+
 export default {
   props: ["modelValue"],
   emits: ["update:modelValue"],
@@ -232,6 +259,8 @@ export default {
       scheduleObject: this.modelValue,
       scheduleType: null,
       scheduleTimepicker: null,
+      controlCatalogueList: [],
+      controlCatalogue: [],
 
       examples: {
         mday: [
@@ -265,13 +294,35 @@ export default {
     };
   },
   methods: {
-    scheduleTypeChanged() {
-      this.scheduleObject.mday = null;
-      this.scheduleObject.wday = null;
-      this.scheduleObject.hour = "8";
-      this.scheduleObject.min = "15";
-      this.scheduleObject.sec = "0";
-      this.scheduleTimepicker = "08:15:00";
+    ...mapActions(["updateControlCatalogue"]),
+    filterControlCatalogue(val, update, abort) {
+      if (val.length < 0) {
+        abort();
+        return;
+      }
+
+      update(() => {
+        const needle = val.toLowerCase();
+        this.controlCatalogueList = this.controlCatalogue.filter((v) => v.control_name.toLowerCase().indexOf(needle) > -1);
+      });
+    },
+    async scheduleTypeChanged() {
+      if (this.scheduleType === "C") {
+        this.scheduleObject.mday = null;
+        this.scheduleObject.wday = null;
+        this.scheduleObject.hour = null;
+        this.scheduleObject.min = null;
+        this.scheduleObject.sec = null;
+        this.scheduleObject.trigger_id = null;
+      } else {
+        this.scheduleObject.mday = null;
+        this.scheduleObject.wday = null;
+        this.scheduleObject.hour = "8";
+        this.scheduleObject.min = "15";
+        this.scheduleObject.sec = "0";
+        this.scheduleObject.trigger_id = null;
+        this.scheduleTimepicker = "08:15:00";
+      }
     },
     scheduleDateTimeChanged() {
       const scheduleDateTimeParts = this.scheduleTimepicker.split(":");
@@ -286,6 +337,7 @@ export default {
         hour: "8",
         min: "15",
         sec: "0",
+        trigger_id: null,
       };
 
       if (scheduleString) {
@@ -299,6 +351,8 @@ export default {
             (String(ret.hour) + String(ret.min) + String(ret.sec)).indexOf(",") > -1
           ) {
             this.scheduleType = "X";
+          } else if (ret.hour == null && ret.min  == null && ret.sec == null) {
+            this.scheduleType = "C";
           } else if (ret.mday) {
             this.scheduleType = "M";
           } else if (ret.wday) {
@@ -355,7 +409,10 @@ export default {
       deep: true,
     },
   },
-  mounted() {
+  async mounted() {
+    this.controlCatalogue = await this.updateControlCatalogue();
+    this.controlCatalogueList = this.controlCatalogue;
+
     var scheduleObjectString = JSON.stringify(this.modelValue);
 
     // Determine schedule type
@@ -367,6 +424,8 @@ export default {
         (String(this.modelValue.hour) + String(this.modelValue.min) + String(this.modelValue.sec)).indexOf(",") > -1
       ) {
         this.scheduleType = "X";
+      } else if (this.modelValue.hour == null && this.modelValue.min == null && this.modelValue.sec == null) {
+        this.scheduleType = "C";
       } else if (this.modelValue.mday) {
         this.scheduleType = "M";
       } else if (this.modelValue.wday) {

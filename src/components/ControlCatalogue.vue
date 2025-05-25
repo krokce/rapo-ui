@@ -177,7 +177,6 @@
       </q-markup-table>
     </div>
   </q-page>
-  {{ this.getSearch }}
 </template>
 
 <script>

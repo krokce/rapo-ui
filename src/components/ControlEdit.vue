@@ -184,7 +184,7 @@
                       <q-icon name="fas fa-stream" @click.stop.prevent />
                     </template>
                     <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-                      Number of control instances allowed to run in parallel.<br />Does not apply to controls started by the scheduler.
+                      Number of control instances allowed to run in parallel.
                     </q-tooltip>
                   </q-input>
 
@@ -726,7 +726,7 @@
                     label="Period type" />
                 </div>
 
-                <div class="row q-gutter-md">
+                <div v-if="scheduleType !== 'C'" class="row q-gutter-md">
                   <iteration-config-box class="col" v-model="iterationConfigObject" :pb="this.control.period_back"> </iteration-config-box>
                 </div>
 
@@ -954,6 +954,7 @@ export default {
         hour: "8",
         min: "15",
         sec: "0",
+        trigger_id: null,
       },
       ruleConfigObject: {},
       cmpOutputTable: [],
@@ -967,6 +968,25 @@ export default {
   },
   computed: {
     ...mapGetters(["controlCatalogueById"]),
+    scheduleType() {
+      // Determine schedule type
+      if (
+        String(this.schedule_config).indexOf("/") > -1 ||
+        String(this.schedule_config).indexOf("-") > -1 ||
+        (String(this.scheduleObject.mday).indexOf(",") > -1 && String(this.scheduleObject.wday).indexOf(",") > -1) ||
+        (String(this.scheduleObject.hour) + String(this.scheduleObject.min) + String(this.scheduleObject.sec)).indexOf(",") > -1
+      ) {
+        return "X";
+      } else if (this.scheduleObject.hour == null && this.scheduleObject.min == null && this.scheduleObject.sec == null) {
+        return "C";
+      } else if (this.scheduleObject.mday) {
+        return "M";
+      } else if (this.scheduleObject.wday) {
+        return "W";
+      } else {
+        return "D";
+      }
+    },
   },
   methods: {
     ...mapActions(["updateControlCatalogue"]),
@@ -1163,9 +1183,12 @@ export default {
         const data = await response.json();
         this.controlVersions = data;
         this.controlVersions.forEach((element) => {
-          element.label = "v." + new Date(element.updated_date ? element.updated_date : element.created_date).toISOString("de-DE").substring(0, 19).replace("T", " ");
+          element.label =
+            "v." + new Date(element.updated_date ? element.updated_date : element.created_date).toISOString("de-DE").substring(0, 19).replace("T", " ");
         });
-        this.control.label = "v." + new Date(this.control.updated_date ? this.control.updated_date : this.control.created_date).toISOString("de-DE").substring(0, 19).replace("T", " ");
+        this.control.label =
+          "v." +
+          new Date(this.control.updated_date ? this.control.updated_date : this.control.created_date).toISOString("de-DE").substring(0, 19).replace("T", " ");
         this.controlVersions.unshift(this.control);
         this.controlVersion = this.controlVersions[0];
       }
@@ -1303,6 +1326,7 @@ export default {
             hour: "8",
             min: "15",
             sec: "0",
+            trigger_id: null,
           };
         }
 
@@ -1365,9 +1389,10 @@ export default {
       var ret = {
         mday: scheduleObject.mday ? String(scheduleObject.mday) : null,
         wday: scheduleObject.wday ? String(scheduleObject.wday) : null,
-        hour: String(scheduleObject.hour),
-        min: String(scheduleObject.min),
-        sec: String(scheduleObject.sec),
+        hour: scheduleObject.hour != null ? String(scheduleObject.hour) : null,
+        min: scheduleObject.min != null ? String(scheduleObject.min) : null,
+        sec: scheduleObject.sec != null ? String(scheduleObject.sec) : null,
+        trigger_id: scheduleObject.trigger_id ? scheduleObject.trigger_id : null,
       };
       return JSON.stringify(ret);
     },
@@ -1378,6 +1403,7 @@ export default {
         hour: "8",
         min: "15",
         sec: "0",
+        trigger_id: null,
       };
 
       var scheduleType = null;
@@ -1393,6 +1419,8 @@ export default {
             (String(ret.hour) + String(ret.min) + String(ret.sec)).indexOf(",") > -1
           ) {
             scheduleType = "X";
+          } else if (!ret.hour && !ret.min && !ret.sec) {
+            scheduleType = "C";
           } else if (ret.mday) {
             scheduleType = "M";
           } else if (ret.wday) {
