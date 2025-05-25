@@ -14,7 +14,7 @@
         <q-space class="col-1" />
 
         <div class="YL__toolbar-input-container row no-wrap" v-if="!hideSearch">
-          <q-input dense outlined square v-model="search" placeholder="Search" class="bg-white col" @keyup="updateSearch(search)" />
+          <q-input dense outlined square v-model="search" placeholder="Search control name" class="bg-white col" @keyup="updateSearch(search)" />
           <q-btn class="YL__toolbar-input-btn" color="grey-3" text-color="grey-8" icon="close" unelevated @click="updateSearch('')" />
         </div>
 

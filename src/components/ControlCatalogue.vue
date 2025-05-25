@@ -9,7 +9,61 @@
       </div>
     </h2>
 
-    <q-btn class="q-my-lg" size="lg" color="primary" icon="fas fa-plus" label="New control" :to="{ name: 'edit-control', params: { controlId: 'new' } }" />
+    <div class="row items-center q-mb-md">
+      <q-btn
+        class="col-2 q-mb-md q-pa-sm"
+        size="lg"
+        color="primary"
+        icon="fas fa-plus"
+        label="New control"
+        :to="{ name: 'edit-control', params: { controlId: 'new' } }" />
+
+      <q-select
+        v-model="filter.type"
+        class="col-2 q-mb-md q-pa-sm"
+        clearable
+        outlined
+        options-dense
+        emit-value
+        map-options
+        :options="[
+          { label: 'ANL - Analysis', value: 'ANL' },
+          { label: 'REC - Reconciliation', value: 'REC' },
+          { label: 'CMP - Comparison', value: 'CMP' },
+          { label: 'REP - Reporting', value: 'REP' },
+        ]"
+        label="Filter by type">
+      </q-select>
+
+      <q-select
+        v-model="filter.status"
+        class="col-2 q-mb-md q-pa-sm"
+        clearable
+        outlined
+        options-dense
+        emit-value
+        map-options
+        :options="[
+          { label: 'Active', value: 'Y' },
+          { label: 'Inactive', value: 'N' },
+        ]"
+        label="Filter by scheduler status">
+      </q-select>
+
+      <q-select
+        v-model="filter.other_attributes"
+        class="col q-mb-md q-pa-sm"
+        clearable
+        outlined
+        options-dense
+        emit-value
+        map-options
+        multiple
+        :options="['Preparation SQL', 'Prerequisite SQL', 'Completion SQL', 'Iterations', 'Case definitions', 'Pre-run hook', 'No Post-run hook']"
+        label="Filter by any other attributes">
+      </q-select>
+
+    </div>
 
     <div>
       <q-markup-table>
@@ -198,6 +252,11 @@ export default {
       confirmDialog: false,
       $q: useQuasar(),
       controlCatalogue: [],
+      filter: {
+        type: null,
+        status: null,
+        other_attributes: null,
+      },
     };
   },
   methods: {
@@ -247,12 +306,30 @@ export default {
       const s = this.getSearch;
       var data = this.controlCatalogue;
       if (s) {
-        data = this.controlCatalogue.filter(
-          (item) =>
-            (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false) ||
-            (item.control_desc ? item.control_desc.toUpperCase().indexOf(s.toUpperCase()) > -1 : false)
-        );
+        data = this.controlCatalogue.filter((item) => (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false));
       }
+      if (this.filter.type) {
+        data = data.filter((item) => item.control_type === this.filter.type);
+      }
+      if (this.filter.status) {
+        data = data.filter((item) => item.status === this.filter.status);
+      }
+      // iterate over other attributes and filter for each
+      if (this.filter.other_attributes && this.filter.other_attributes.length > 0) {
+        data = data.filter((item) => {
+          const attributes = this.filter.other_attributes;
+          return (
+            (attributes.includes("Preparation SQL") && item.preparation_sql) ||
+            (attributes.includes("Prerequisite SQL") && item.prerequisite_sql) ||
+            (attributes.includes("Completion SQL") && item.completion_sql) ||
+            (attributes.includes("Iterations") && item.iteration_config && JSON.parse(item.iteration_config).length > 0) ||
+            (attributes.includes("Case definitions") && item.case_config) ||
+            (attributes.includes("Pre-run hook") && item.need_prerun_hook === "Y") ||
+            (attributes.includes("No Post-run hook") && item.need_postrun_hook !== "Y")
+          );
+        });
+      }
+
       return data;
     },
     filteredControlCatalogueLen() {
