@@ -183,9 +183,7 @@
                     <template v-slot:prepend>
                       <q-icon name="fas fa-stream" @click.stop.prevent />
                     </template>
-                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-                      Number of control instances allowed to run in parallel.
-                    </q-tooltip>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Number of control instances allowed to run in parallel. </q-tooltip>
                   </q-input>
 
                   <q-input class="col" v-model.number="control.timeout" type="number" outlined label="Timeout (sec.)">
@@ -1096,7 +1094,16 @@ export default {
         var ret;
         // data is array of objects {column_name, data_type}. Create an array containing only the columns from type `which`: NUMBER, VARCHAR2, DATE
         if (which === "numeric") {
-          ret = data.filter((item) => item.data_type.toUpperCase().includes("NUMBER")).map((item) => item.column_name);
+          ret = data
+            .filter(
+              (item) =>
+                item.data_type.toUpperCase().includes("NUMBER") ||
+                item.data_type.toUpperCase().includes("FLOAT") ||
+                item.data_type.toUpperCase().includes("DOUBLE") ||
+                item.data_type.toUpperCase().includes("DECIMAL") ||
+                item.data_type.toUpperCase().includes("INTEGER")
+            )
+            .map((item) => item.column_name);
         } else if (which === "string") {
           ret = data.filter((item) => item.data_type.toUpperCase().includes("CHAR")).map((item) => item.column_name);
         } else if (which === "date") {
