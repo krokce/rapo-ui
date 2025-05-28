@@ -161,21 +161,12 @@
                 </div>
 
                 <div class="row q-my-md q-gutter-md">
-                  <q-input
-                    class="col"
-                    v-model.number="control.parallelism"
-                    type="number"
-                    outlined
-                    label="Parallelism"
-                    :min="1"
-                    :max="4"
-                    :step="1"
-                    @update:model-value="updateParallelism">
+                  <q-input class="col" v-model.number="control.parallelism" type="number" outlined label="Parallelism" :min="1" :step="1">
                     <template v-slot:prepend>
                       <q-icon name="fas fa-microchip" @click.stop.prevent />
                     </template>
                     <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-                      Execute in parallel mode (oracle /*PARALLEL*/ hint). <br />Maximum is 4.
+                      Execute in parallel mode (oracle /*PARALLEL*/ hint). <br />Recommended maximum is 4.
                     </q-tooltip>
                   </q-input>
 
@@ -285,7 +276,6 @@
                   <q-input class="col-2" outlined v-model="control.source_type_a" label="System" maxlength="90" />
                 </div>
 
-
                 <div class="row q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
                   <q-select
                     class="col"
@@ -354,7 +344,7 @@
                       </q-item>
                     </template>
                   </q-select>
-                  
+
                   <q-select
                     v-if="control.control_type === 'REC'"
                     class="col-1"
@@ -995,9 +985,6 @@ export default {
   },
   methods: {
     ...mapActions(["updateControlCatalogue"]),
-    updateParallelism(value) {
-      this.control.parallelism = Math.min(4, Math.abs(value));
-    },
     updateLogDaysBack(days) {
       this.getControlLogs(this.control.control_name, days);
     },
