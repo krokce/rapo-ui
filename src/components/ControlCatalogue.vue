@@ -35,6 +35,8 @@
         label="Filter by type">
       </q-select>
 
+      <q-input clearable class="col q-mb-md q-pa-sm" outlined v-model="filter.control_name" label="Filter by name" maxlength="45" />
+
       <q-select
         v-model="filter.status"
         class="col-2 q-mb-md q-pa-sm"
@@ -52,7 +54,7 @@
 
       <q-select
         v-model="filter.other_attributes"
-        class="col q-mb-md q-pa-sm"
+        class="col-3 q-mb-md q-pa-sm"
         clearable
         outlined
         options-dense
@@ -63,6 +65,7 @@
         label="Filter by any other attributes">
       </q-select>
 
+      <q-btn flat round color="grey" class="q-mb-md q-pa-sm" icon="fas fa-times-circle" @click="clearFilters" />
     </div>
 
     <div>
@@ -253,6 +256,7 @@ export default {
       $q: useQuasar(),
       controlCatalogue: [],
       filter: {
+        control_name: "",
         type: null,
         status: null,
         other_attributes: null,
@@ -299,6 +303,13 @@ export default {
       var ret = new Date(val).toISOString("de-DE").substring(0, 19).replace("T", " ");
       return ret;
     },
+    clearFilters() {
+      this.filter.control_name = null;
+      this.filter.type = null;
+      this.filter.status = null;
+      this.filter.other_attributes = [];
+      this.$store.commit("updateSearch", "");
+    },
   },
   computed: {
     ...mapGetters(["getSearch"]),
@@ -308,6 +319,10 @@ export default {
       if (s) {
         data = this.controlCatalogue.filter((item) => (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false));
       }
+      if (this.filter.control_name) {
+        data = data.filter((item) => item.control_name.toUpperCase().indexOf(this.filter.control_name.toUpperCase()) > -1);
+      }
+
       if (this.filter.type) {
         data = data.filter((item) => item.control_type === this.filter.type);
       }

@@ -9,8 +9,54 @@
       </div>
     </h2>
 
-    <div class="q-pa-md">
-      <q-markup-table dense>
+    <div class="row items-center q-mb-md">
+      <q-select
+        v-model="filter.type"
+        class="col-2 q-mb-md q-pa-sm"
+        clearable
+        outlined
+        options-dense
+        emit-value
+        map-options
+        :options="[
+          { label: 'ANL - Analysis', value: 'ANL' },
+          { label: 'REC - Reconciliation', value: 'REC' },
+          { label: 'CMP - Comparison', value: 'CMP' },
+          { label: 'REP - Reporting', value: 'REP' },
+        ]"
+        label="Filter by type">
+      </q-select>
+
+      <q-input clearable class="col q-mb-md q-pa-sm" outlined v-model="filter.control_name" label="Filter by name" maxlength="45" />
+
+      <q-select
+        v-model="filter.status"
+        class="col-5 q-mb-md q-pa-sm"
+        clearable
+        outlined
+        options-dense
+        emit-value
+        map-options
+        multiple
+        :options="[
+          { label: 'Initiated', value: 'I' },
+          { label: 'Waiting', value: 'W' },
+          { label: 'Started', value: 'S' },
+          { label: 'Running', value: 'P' },
+          { label: 'Finishing', value: 'F' },
+          { label: 'Done', value: 'D' },
+          { label: 'Error', value: 'E' },
+          { label: 'Canceled', value: 'C' },
+          { label: 'Revoked', value: 'X' },
+        ]"
+        label="Filter by status">
+      </q-select>
+
+      <q-btn flat round color="grey" class="q-mb-md q-pa-sm" icon="fas fa-times-circle" @click="clearFilters" />
+    </div>
+
+    <div>
+      <q-markup-table>
         <thead>
           <tr class="bg-blue-grey-2">
             <th class="text-left">Type</th>
@@ -225,6 +271,10 @@ export default {
       },
       refreshTimer: null,
       controlResults: [],
+      filter: {
+        type: null,
+        status: null,
+      },
     };
   },
   methods: {
@@ -429,17 +479,48 @@ export default {
       clearInterval(this.refreshTimer);
     },
   },
+  clearFilters() {
+    this.filter.control_name = null;
+    this.filter.type = null;
+    this.filter.status = null;
+    this.filter.other_attributes = [];
+    this.$store.commit("updateSearch", "");
+  },
   computed: {
     ...mapGetters(["getSearch"]),
     filteredControlResults() {
       const s = this.getSearch;
       var data = this.controlResults;
       if (s) {
-        data = this.controlResults.filter(
-          (item) =>
-            (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false) ||
-            (item.control_desc ? item.control_desc.toUpperCase().indexOf(s.toUpperCase()) > -1 : false)
-        );
+        data = this.controlResults.filter((item) => (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false));
+      }
+
+      // filter by control name
+      if (this.filter.control_name) {
+        data = data.filter((item) => item.control_name.toUpperCase().indexOf(this.filter.control_name.toUpperCase()) > -1);
+      }
+
+      // filter by control type
+      if (this.filter.type) {
+        data = data.filter((item) => item.control_type === this.filter.type);
+      }
+
+      // iterate over other attributes and filter for each
+      if (this.filter.status && this.filter.status.length > 0) {
+        data = data.filter((item) => {
+          const attributes = this.filter.status;
+          return (
+            (attributes.includes("I") && item.status == "I") ||
+            (attributes.includes("W") && item.status == "W") ||
+            (attributes.includes("S") && item.status == "S") ||
+            (attributes.includes("P") && item.status == "P") ||
+            (attributes.includes("F") && item.status == "F") ||
+            (attributes.includes("D") && item.status == "D") ||
+            (attributes.includes("E") && item.status == "E") ||
+            (attributes.includes("C") && item.status == "C") ||
+            (attributes.includes("X") && item.status == "X")
+          );
+        });
       }
       return data;
     },
