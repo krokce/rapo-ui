@@ -32,10 +32,12 @@
           { label: 'CMP - Comparison', value: 'CMP' },
           { label: 'REP - Reporting', value: 'REP' },
         ]"
-        label="Filter by type">
+        label="Control type">
       </q-select>
 
-      <q-input clearable class="col q-mb-md q-pa-sm" outlined v-model="filter.control_name" label="Filter by name" maxlength="45" />
+      <q-input clearable class="col q-mb-md q-pa-sm" outlined v-model="filter.control_name" label="Control name" maxlength="45" />
+
+      <q-input clearable class="col q-mb-md q-pa-sm" outlined v-model="filter.system" label="System" maxlength="45" />
 
       <q-select
         v-model="filter.status"
@@ -49,12 +51,12 @@
           { label: 'Active', value: 'Y' },
           { label: 'Inactive', value: 'N' },
         ]"
-        label="Filter by scheduler status">
+        label="Scheduler status">
       </q-select>
 
       <q-select
         v-model="filter.other_attributes"
-        class="col-3 q-mb-md q-pa-sm"
+        class="col-2 q-mb-md q-pa-sm"
         clearable
         outlined
         options-dense
@@ -62,10 +64,12 @@
         map-options
         multiple
         :options="['Preparation SQL', 'Prerequisite SQL', 'Completion SQL', 'Iterations', 'Case definitions', 'Pre-run hook', 'No Post-run hook']"
-        label="Filter by any other attributes">
+        label="Control attributes">
       </q-select>
 
-      <q-btn flat round color="grey" class="q-mb-md q-pa-sm" icon="fas fa-times-circle" @click="clearFilters" />
+      <q-btn flat round color="grey" class="q-mb-md q-pa-sm" icon="fas fa-times-circle" @click="clearFilters">
+        <q-tooltip anchor="top left" self="bottom left" :offset="[15, 10]"> Clear filters </q-tooltip>
+      </q-btn>
     </div>
 
     <div>
@@ -117,6 +121,14 @@
             <td class="text-left" style="width: 100%">
               <div style="white-space: normal; word-wrap: break-word">
                 {{ control.control_description }}
+
+                <span class="text-indigo-4" style="align-items: center">
+                  <span v-if="control.source_type_a || control.source_type_b">
+                    (<q-icon name="fas fa-plug fa-rotate-90" size="xxs" /> / {{ control.source_type_a }}
+                    <q-icon v-if="control.source_type_a && control.source_type_b" name="fas fa-long-arrow-alt-right" size="xxs" />
+                    {{ control.source_type_b }})
+                  </span>
+                </span>
               </div>
 
               <div class="row justify-start items-center">
@@ -308,6 +320,7 @@ export default {
       this.filter.type = null;
       this.filter.status = null;
       this.filter.other_attributes = [];
+      this.filter.system = null;
       this.$store.commit("updateSearch", "");
     },
   },
@@ -328,6 +341,13 @@ export default {
       }
       if (this.filter.status) {
         data = data.filter((item) => item.status === this.filter.status);
+      }
+      if (this.filter.system) {
+        data = data.filter(
+          (item) =>
+            item.source_type_a?.toUpperCase().indexOf(this.filter.system.toUpperCase()) > -1 ||
+            item.source_type_a?.toUpperCase().indexOf(this.filter.system.toUpperCase()) > -1
+        );
       }
       // iterate over other attributes and filter for each
       if (this.filter.other_attributes && this.filter.other_attributes.length > 0) {

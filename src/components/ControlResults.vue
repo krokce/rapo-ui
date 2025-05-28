@@ -24,14 +24,14 @@
           { label: 'CMP - Comparison', value: 'CMP' },
           { label: 'REP - Reporting', value: 'REP' },
         ]"
-        label="Filter by type">
+        label="Control type">
       </q-select>
 
-      <q-input clearable class="col q-mb-md q-pa-sm" outlined v-model="filter.control_name" label="Filter by name" maxlength="45" />
+      <q-input clearable class="col q-mb-md q-pa-sm" outlined v-model="filter.control_name" label="Control name" maxlength="45" />
 
       <q-select
         v-model="filter.status"
-        class="col-5 q-mb-md q-pa-sm"
+        class="col-4 q-mb-md q-pa-sm"
         clearable
         outlined
         options-dense
@@ -49,10 +49,12 @@
           { label: 'Canceled', value: 'C' },
           { label: 'Revoked', value: 'X' },
         ]"
-        label="Filter by status">
+        label="Run status">
       </q-select>
 
-      <q-btn flat round color="grey" class="q-mb-md q-pa-sm" icon="fas fa-times-circle" @click="clearFilters" />
+      <q-btn flat round color="grey" class="q-mb-md q-pa-sm" icon="fas fa-times-circle" @click="clearFilters">
+        <q-tooltip anchor="top left" self="bottom left" :offset="[15, 10]"> Clear filters </q-tooltip>
+      </q-btn>
     </div>
 
     <div>
@@ -197,7 +199,7 @@
                     : control.status === "E"
                     ? "Error"
                     : control.status === "C"
-                    ? "Cancelled"
+                    ? "Canceled"
                     : control.status === "X"
                     ? "Revoked"
                     : !control.status

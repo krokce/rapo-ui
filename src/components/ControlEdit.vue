@@ -281,11 +281,14 @@
                       <q-icon name="far fa-calendar-alt" @click.stop.prevent />
                     </template>
                   </q-select>
+
+                  <q-input class="col-2" outlined v-model="control.source_type_a" label="System" maxlength="90" />
                 </div>
+
 
                 <div class="row q-gutter-md" v-if="control.control_type === 'REC' || control.control_type === 'CMP'">
                   <q-select
-                    :class="control.control_type === 'REC' ? ' col-4' : 'col'"
+                    class="col"
                     outlined
                     v-model="control.source_name_a"
                     use-input
@@ -307,13 +310,15 @@
 
                   <q-select
                     v-if="control.control_type === 'REC'"
-                    class="col"
+                    class="col-1"
                     outlined
                     v-model="control.source_key_field_a"
                     input-debounce="0"
-                    label="Key field A (TAG)"
+                    label="Key field A"
                     :options="[...new Set([...(datasourceAColumns ? datasourceAColumns : []), 'TAG'])]">
                   </q-select>
+
+                  <q-input class="col-1" outlined v-model="control.source_type_a" label="System A" maxlength="90" />
 
                   <q-select
                     v-if="control.control_type === 'CMP'"
@@ -330,7 +335,7 @@
                   </q-select>
 
                   <q-select
-                    :class="control.control_type === 'REC' ? ' col-4' : 'col'"
+                    class="col"
                     outlined
                     v-model="control.source_name_b"
                     use-input
@@ -349,16 +354,18 @@
                       </q-item>
                     </template>
                   </q-select>
-
+                  
                   <q-select
                     v-if="control.control_type === 'REC'"
-                    class="col"
+                    class="col-1"
                     outlined
                     v-model="control.source_key_field_b"
                     input-debounce="0"
-                    label="Key field B (TAG)"
+                    label="Key field B"
                     :options="[...new Set([...(datasourceBColumns ? datasourceBColumns : []), 'TAG'])]">
                   </q-select>
+
+                  <q-input class="col-1" outlined v-model="control.source_type_b" label="System B" maxlength="90" />
 
                   <q-select
                     v-if="control.control_type === 'CMP'"
@@ -861,7 +868,7 @@
                               : control_log.status === "E"
                               ? "Error"
                               : control_log.status === "C"
-                              ? "Cancelled"
+                              ? "Canceled"
                               : control_log.status === "X"
                               ? "Revoked"
                               : !control_log.status
