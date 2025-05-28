@@ -14,7 +14,7 @@
         class="col-2 q-mb-md q-pa-sm"
         size="lg"
         color="primary"
-        icon="fas fa-plus"
+        icon="fas fa-plus-circle"
         label="New control"
         :to="{ name: 'edit-control', params: { controlId: 'new' } }" />
 
@@ -124,9 +124,9 @@
 
                 <span class="text-indigo-4" style="align-items: center">
                   <span v-if="control.source_type_a || control.source_type_b">
-                    (<q-icon name="fas fa-plug fa-rotate-90" size="xxs" /> / {{ control.source_type_a }}
+                    <q-icon name="fas fa-plug fa-rotate-90" size="xxs" /> ( {{ control.source_type_a }}
                     <q-icon v-if="control.source_type_a && control.source_type_b" name="fas fa-long-arrow-alt-right" size="xxs" />
-                    {{ control.source_type_b }})
+                    {{ control.source_type_b }} )
                   </span>
                 </span>
               </div>
@@ -194,7 +194,7 @@
               <q-btn size="sm" color="grey-7" round flat icon="fas fa-ellipsis-v">
                 <q-menu>
                   <q-list dense class="text-no-wrap">
-                    <run-control-dialog :control="control">
+                    <run-control-dialog :control_name="control.control_name">
                       <q-item dense clickable class="col items-center">
                         <q-item-section> Run </q-item-section>
                       </q-item>
@@ -276,7 +276,7 @@ export default {
     };
   },
   methods: {
-    ...mapActions(["updateControlCatalogue"]),
+    ...mapActions(["updateControlCatalogue", "updateSearch"]),
     async deleteControl(control_id) {
       this.$q.loadingBar.start();
 
@@ -321,7 +321,7 @@ export default {
       this.filter.status = null;
       this.filter.other_attributes = [];
       this.filter.system = null;
-      this.$store.commit("updateSearch", "");
+      // this.updateSearch("");
     },
   },
   computed: {

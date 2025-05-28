@@ -10,6 +10,9 @@
     </h2>
 
     <div class="row items-center q-mb-md">
+      <q-btn class="col-2 q-mb-md q-pa-sm" size="lg" color="primary" icon="fas fa-play-circle" label="Run control" @click="$refs.runControlDialog.open()" />
+      <run-control-dialog ref="runControlDialog" :hook="refreshControlResults" />
+
       <q-select
         v-model="filter.type"
         class="col-2 q-mb-md q-pa-sm"
@@ -215,7 +218,7 @@
                     <q-item dense clickable @click="reRun(control)" v-close-popup>
                       <q-item-section> Re-run </q-item-section>
                     </q-item>
-                    <run-control-dialog :control="control" :hook="refreshControlResults">
+                    <run-control-dialog :control_name="control.control_name" :hook="refreshControlResults">
                       <q-item dense clickable class="col items-center">
                         <q-item-section> Run </q-item-section>
                       </q-item>
@@ -480,13 +483,13 @@ export default {
     stopRefreshTimer() {
       clearInterval(this.refreshTimer);
     },
-  },
-  clearFilters() {
-    this.filter.control_name = null;
-    this.filter.type = null;
-    this.filter.status = null;
-    this.filter.other_attributes = [];
-    this.$store.commit("updateSearch", "");
+    clearFilters() {
+      this.filter.control_name = null;
+      this.filter.type = null;
+      this.filter.status = null;
+      this.filter.other_attributes = [];
+      // this.updateSearch("");
+    },
   },
   computed: {
     ...mapGetters(["getSearch"]),

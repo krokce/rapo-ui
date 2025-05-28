@@ -10,9 +10,9 @@
 
         <q-checkbox color="blue" label="Write B not in A discrepancies" v-model="ruleConfigObject.need_issues_b" />
 
-        <q-checkbox color="blue" label="Write A match" v-model="ruleConfigObject.need_recons_a" />
+        <q-checkbox color="blue" label="Write A matches" v-model="ruleConfigObject.need_recons_a" />
 
-        <q-checkbox color="blue" label="Write B match" v-model="ruleConfigObject.need_recons_b" />
+        <q-checkbox color="blue" label="Write B matches" v-model="ruleConfigObject.need_recons_b" />
 
         <q-checkbox color="blue" label="Allow duplicates" v-model="ruleConfigObject.allow_duplicates">
           <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]"> If active, duplicate records won't be treated as discrepancies </q-tooltip>
