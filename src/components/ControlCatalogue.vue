@@ -57,14 +57,13 @@
       <q-select
         v-model="filter.other_attributes"
         class="col-3 q-mb-md q-pa-sm"
-        clearable
         outlined
         options-dense
         emit-value
         map-options
         multiple
         use-chips
-        :options="['Preparation SQL', 'Prerequisite SQL', 'Completion SQL', 'Iterations', 'Case definitions', 'Pre-run hook', 'No Post-run hook']"
+        :options="['Preparation SQL', 'Prerequisite SQL', 'Completion SQL', 'Iterations', 'Case definition', 'Pre-run hook', 'No Post-run hook']"
         label="Control attributes">
       </q-select>
 
@@ -79,8 +78,8 @@
           <tr class="bg-blue-grey-2">
             <th class="text-center" style="width: 50px">Type</th>
             <th class="text-left">Name</th>
-            <th class="text-left">Schedule</th>
             <th class="text-left">Description</th>
+            <th class="text-left">Schedule</th>
             <th class="text-left"></th>
           </tr>
         </thead>
@@ -90,61 +89,79 @@
               <q-chip
                 size="12px"
                 text-color="white"
+                clickable
                 :class="{
                   'bg-pink-8': control.control_type === 'ANL',
                   'bg-teal-8': control.control_type === 'REC',
                   'bg-lime-8': control.control_type === 'CMP',
                   'bg-indigo-6': control.control_type === 'REP',
                 }"
-                class="text-weight-bold">
+                class="text-weight-bold"
+                @click="this.filter.type = control.control_type">
                 {{ control.control_type }}
               </q-chip>
             </td>
             <td class="text-left" style="width: 300px">
+              <div class="text-weight-bold text-grey-9" style="font-size: 16px">
+                {{ control.control_name }}
+              </div>
               <router-link
                 :to="{
                   name: 'edit-control',
                   params: { controlId: control.control_id },
                 }"
-                class="no-underline"
                 style="text-decoration: none">
                 <div>
-                  <div class="text-weight-bold text-grey-9" style="font-size: 14px">
-                    {{ control.control_name }}
-                  </div>
-                  <small class="text-grey-7"> v.{{ toDateTimeString(control.updated_date) }} </small>
+                  <small class="text-indigo-4"> v.{{ toDateTimeString(control.updated_date) }} </small>
                 </div>
               </router-link>
             </td>
-            <td style="width: 100px">
-              <div class="row justify-start items-center">
-                <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>
-              </div>
-            </td>
+
             <td class="text-left" style="width: 100%">
               <div style="white-space: normal; word-wrap: break-word">
                 {{ control.control_description }}
-
-                <span class="text-indigo-4" style="align-items: center">
-                  <span v-if="control.source_type_a || control.source_type_b">
-                    <q-icon name="fas fa-plug fa-rotate-90" size="xxs" /> ( {{ control.source_type_a }}
-                    <q-icon v-if="control.source_type_a && control.source_type_b" name="fas fa-long-arrow-alt-right" size="xxs" />
-                    {{ control.source_type_b }} )
-                  </span>
-                </span>
               </div>
 
               <div class="row justify-start items-center">
                 <q-chip
+                  v-if="control.source_type_a"
                   clickable
-                  v-if="control.case_config"
-                  size="sm"
-                  color="indigo-4"
+                  color="green-8"
                   text-color="white"
-                  icon="fas fa-tag"
-                  @click="$q.notify(control.case_config)">
-                  Case config
+                  size="sm"
+                  icon-right="fas fa-plug fa-rotate-270"
+                  @click="this.filter.system = control.source_type_a"
+                  style="align-items: center">
+                  {{ control.source_type_a }}
                 </q-chip>
+                <q-icon v-if="control.source_type_a && control.source_type_b" name="fas fa-ellipsis-h" size="15px" color="green-8" />
+                <q-chip
+                  v-if="control.source_type_b"
+                  clickable
+                  color="green-8"
+                  text-color="white"
+                  size="sm"
+                  icon="fas fa-plug fa-rotate-90"
+                  @click="this.filter.system = control.source_type_b"
+                  style="align-items: center">
+                  {{ control.source_type_b }}
+                </q-chip>
+
+                <q-chip v-if="control.status !== 'Y'" clickable size="sm" color="red-4" text-color="white" icon="fas fa-clock" @click="filter.status = 'N'">
+                  Scheduler inactive
+                </q-chip>
+
+                <q-chip
+                  clickable
+                  v-if="control.need_postrun_hook != 'Y'"
+                  size="sm"
+                  color="red-4"
+                  text-color="white"
+                  icon="fas fa-bolt"
+                  @click="this.filter.other_attributes.push('No Post-run hook')">
+                  No Post-run hook
+                </q-chip>
+
                 <q-chip
                   clickable
                   v-if="control.prerequisite_sql"
@@ -152,9 +169,10 @@
                   color="indigo-4"
                   text-color="white"
                   icon="fas fa-database"
-                  @click="$q.notify(control.prerequisite_sql)">
+                  @click="this.filter.other_attributes.push('Prerequisite SQL')">
                   Prerequisite SQL
                 </q-chip>
+
                 <q-chip
                   clickable
                   v-if="control.preparation_sql"
@@ -162,9 +180,10 @@
                   color="indigo-4"
                   text-color="white"
                   icon="fas fa-database"
-                  @click="$q.notify(control.preparation_sql)">
+                  @click="this.filter.other_attributes.push('Preparation SQL')">
                   Preparation SQL
                 </q-chip>
+
                 <q-chip
                   clickable
                   v-if="control.completion_sql"
@@ -172,14 +191,32 @@
                   color="indigo-4"
                   text-color="white"
                   icon="fas fa-database"
-                  @click="$q.notify(control.completion_sql)">
+                  @click="this.filter.other_attributes.push('Completion SQL')">
                   Completion SQL
                 </q-chip>
-                <q-chip clickable v-if="control.need_prerun_hook === 'Y'" size="sm" color="indigo-4" text-color="white" icon="fas fa-bolt"> Pre HOOK </q-chip>
-                <q-chip clickable v-if="control.need_postrun_hook != 'Y'" size="sm" color="red-4" text-color="white" icon="fas fa-bolt">
-                  Post HOOK inactive</q-chip
-                >
-                <q-chip clickable v-if="control.status !== 'Y'" size="sm" color="red-4" text-color="white" icon="fas fa-clock"> Scheduler inactive </q-chip>
+
+                <q-chip
+                  clickable
+                  v-if="control.need_prerun_hook === 'Y'"
+                  size="sm"
+                  color="indigo-4"
+                  text-color="white"
+                  icon="fas fa-bolt"
+                  @click="this.filter.other_attributes.push('Pre-run hook')">
+                  Pre-run hook
+                </q-chip>
+
+                <q-chip
+                  clickable
+                  v-if="control.case_config"
+                  size="sm"
+                  color="indigo-4"
+                  text-color="white"
+                  icon="fas fa-tag"
+                  @click="this.filter.other_attributes.push('Case definition')">
+                  Case definition
+                </q-chip>
+
                 <q-chip
                   clickable
                   v-if="control.iteration_config && JSON.parse(control.iteration_config).length > 0"
@@ -187,9 +224,15 @@
                   color="indigo-4"
                   text-color="white"
                   icon="fas fa-history"
-                  @click="$q.notify(control.iteration_config)">
+                  @click="this.filter.other_attributes.push('Iterations')">
                   +{{ JSON.parse(control.iteration_config).length }} Iteration{{ JSON.parse(control.iteration_config).length > 1 ? "s" : "" }}
                 </q-chip>
+              </div>
+            </td>
+
+            <td style="width: 100px">
+              <div class="row justify-start items-center">
+                <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>
               </div>
             </td>
 
@@ -274,7 +317,7 @@ export default {
         control_name: "",
         type: null,
         status: null,
-        other_attributes: null,
+        other_attributes: [],
       },
     };
   },
@@ -361,7 +404,7 @@ export default {
             (attributes.includes("Prerequisite SQL") && item.prerequisite_sql) ||
             (attributes.includes("Completion SQL") && item.completion_sql) ||
             (attributes.includes("Iterations") && item.iteration_config && JSON.parse(item.iteration_config).length > 0) ||
-            (attributes.includes("Case definitions") && item.case_config) ||
+            (attributes.includes("Case definition") && item.case_config) ||
             (attributes.includes("Pre-run hook") && item.need_prerun_hook === "Y") ||
             (attributes.includes("No Post-run hook") && item.need_postrun_hook !== "Y")
           );

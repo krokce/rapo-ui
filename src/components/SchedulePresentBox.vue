@@ -1,6 +1,5 @@
 <template>
   <q-chip
-    square
     size="12px"
     class="row items-center"
     :class="{

@@ -35,7 +35,6 @@
       <q-select
         v-model="filter.status"
         class="col-4 q-mb-md q-pa-sm"
-        clearable
         outlined
         options-dense
         emit-value
@@ -87,7 +86,8 @@
           <tr v-for="(control, index) in filteredControlResults" :key="control.process_id">
             <td class="text-center" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-chip
-                size="12px"
+                clickable
+                size="11px"
                 text-color="white"
                 :class="{
                   'bg-pink-8': control.control_type === 'ANL',
@@ -95,7 +95,8 @@
                   'bg-lime-8': control.control_type === 'CMP',
                   'bg-indigo-6': control.control_type === 'REP',
                 }"
-                class="text-weight-bold">
+                class="text-weight-bold"
+                @click="this.filter.type = control.control_type">
                 {{ control.control_type }}
               </q-chip>
             </td>
@@ -112,7 +113,7 @@
                 round
                 flat
                 icon="fas fa-search"
-                @click.stop="this.getSearch ? updateSearch(null) : updateSearch(control.control_name)" />
+                @click.stop="this.filter.control_name = control.control_name" />
               <router-link
                 :to="{
                   name: 'edit-control',
@@ -120,6 +121,7 @@
                 }">
                 <span
                   class="col cursor-pointer"
+                  style="font-size: 13px"
                   :class="{
                     'text-pink-8': control.control_type === 'ANL',
                     'text-teal-8': control.control_type === 'REC',
@@ -176,7 +178,7 @@
             </td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.prerequisite_value }}</td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
-              <q-chip class="cursor-pointer">
+              <q-chip clickable class="cursor-pointer" @click="!this.filter.status.includes(control.status) && this.filter.status.push(control.status)">
                 <q-avatar v-if="control.status == 'I'" icon="fas fa-plus-circle" color="indigo" text-color="white" />
                 <q-avatar v-if="control.status == 'W'" icon="fas fa-pause-circle" color="amber-7" text-color="white" />
                 <q-avatar v-if="control.status == 'S'" icon="fas fa-play-circle" color="blue" text-color="white" />
@@ -279,7 +281,7 @@ export default {
       controlResults: [],
       filter: {
         type: null,
-        status: null,
+        status: [],
       },
     };
   },
@@ -487,8 +489,7 @@ export default {
     clearFilters() {
       this.filter.control_name = null;
       this.filter.type = null;
-      this.filter.status = null;
-      this.filter.other_attributes = [];
+      this.filter.status = [];
       // this.updateSearch("");
     },
   },
