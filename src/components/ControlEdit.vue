@@ -476,7 +476,7 @@
                   </div>
                 </div>
 
-                <div class="col q-gutter-md" v-if="control.control_type === 'REC'">
+                <div class="col q-gutter-y-md" v-if="control.control_type === 'REC'">
                   <reconciliation-discrepancy-checkboxes class="col" v-model="this.ruleConfigObject"> </reconciliation-discrepancy-checkboxes>
 
                   <q-card class="q-pa-sm" flat bordered>
@@ -485,7 +485,7 @@
                     </q-item-section>
 
                     <q-card-section class="q-gutter-xs">
-                      <div class="row q-gutter-md">
+                      <div class="row q-gutter-xs items-center">
                         <q-select
                           class="col-2"
                           outlined

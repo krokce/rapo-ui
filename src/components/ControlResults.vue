@@ -41,6 +41,7 @@
         emit-value
         map-options
         multiple
+        use-chips
         :options="[
           { label: 'Initiated', value: 'I' },
           { label: 'Waiting', value: 'W' },
@@ -86,7 +87,7 @@
           <tr v-for="(control, index) in filteredControlResults" :key="control.process_id">
             <td class="text-center" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-chip
-                size="sm"
+                size="12px"
                 text-color="white"
                 :class="{
                   'bg-pink-8': control.control_type === 'ANL',

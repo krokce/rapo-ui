@@ -41,7 +41,7 @@
 
       <q-select
         v-model="filter.status"
-        class="col-2 q-mb-md q-pa-sm"
+        class="col q-mb-md q-pa-sm"
         clearable
         outlined
         options-dense
@@ -56,13 +56,14 @@
 
       <q-select
         v-model="filter.other_attributes"
-        class="col-2 q-mb-md q-pa-sm"
+        class="col-3 q-mb-md q-pa-sm"
         clearable
         outlined
         options-dense
         emit-value
         map-options
         multiple
+        use-chips
         :options="['Preparation SQL', 'Prerequisite SQL', 'Completion SQL', 'Iterations', 'Case definitions', 'Pre-run hook', 'No Post-run hook']"
         label="Control attributes">
       </q-select>
@@ -100,18 +101,20 @@
               </q-chip>
             </td>
             <td class="text-left" style="width: 300px">
-              <div>
-                <div class="text-weight-bold text-grey-9 text-subtitle1">
-                  {{ control.control_name }}
-                </div>
-                <router-link
-                  :to="{
-                    name: 'edit-control',
-                    params: { controlId: control.control_id },
-                  }">
+              <router-link
+                :to="{
+                  name: 'edit-control',
+                  params: { controlId: control.control_id },
+                }"
+                class="no-underline"
+                style="text-decoration: none">
+                <div>
+                  <div class="text-weight-bold text-grey-9" style="font-size: 14px">
+                    {{ control.control_name }}
+                  </div>
                   <small class="text-grey-7"> v.{{ toDateTimeString(control.updated_date) }} </small>
-                </router-link>
-              </div>
+                </div>
+              </router-link>
             </td>
             <td style="width: 100px">
               <div class="row justify-start items-center">

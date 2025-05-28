@@ -15,6 +15,8 @@
             outlined
             @filter="filterFieldListA"
             v-model="ruleConfigObject.discrepancy_config[index].field_a"
+            new-value-mode="add"
+            hide-dropdown-icon
             :options="datasourceAList"
             label="Field A" />
 
@@ -28,6 +30,8 @@
             outlined
             @filter="filterFieldListB"
             v-model="ruleConfigObject.discrepancy_config[index].field_b"
+            new-value-mode="add"
+            hide-dropdown-icon
             :options="datasourceBList"
             label="Field B" />
 
@@ -51,9 +55,7 @@
             <template v-slot:prepend>
               <q-icon name="fas fa-long-arrow-alt-right" @click.stop.prevent />
             </template>
-            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-              Upper tolerance value (match if A minus B is lower than this value)
-            </q-tooltip>
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Upper tolerance value (match if A minus B is lower than this value) </q-tooltip>
           </q-input>
 
           <q-icon name="fas fa-circle" size="15px" color="blue-grey-3" />
@@ -140,6 +142,10 @@ export default {
         const needle = val.toLowerCase();
         this.datasourceBList = this.datasourceBColumns.filter((v) => v.toLowerCase().indexOf(needle) > -1);
       });
+    },
+    onNewValue(index, field) {
+      // Handle new value creation logic here
+      console.log(`New value added for index ${index}, field ${field}`);
     },
   },
   watch: {

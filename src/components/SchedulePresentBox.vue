@@ -1,7 +1,7 @@
 <template>
   <q-chip
     square
-    size="13px"
+    size="12px"
     class="row items-center"
     :class="{
       'bg-blue-grey-7': schedule_type === 'D',
