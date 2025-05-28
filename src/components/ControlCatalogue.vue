@@ -346,7 +346,7 @@ export default {
         data = data.filter(
           (item) =>
             item.source_type_a?.toUpperCase().indexOf(this.filter.system.toUpperCase()) > -1 ||
-            item.source_type_a?.toUpperCase().indexOf(this.filter.system.toUpperCase()) > -1
+            item.source_type_b?.toUpperCase().indexOf(this.filter.system.toUpperCase()) > -1
         );
       }
       // iterate over other attributes and filter for each
