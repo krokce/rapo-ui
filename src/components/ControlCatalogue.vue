@@ -123,30 +123,6 @@
               </div>
 
               <div class="row justify-start items-center">
-                <q-chip
-                  v-if="control.source_type_a"
-                  clickable
-                  color="green-8"
-                  text-color="white"
-                  size="sm"
-                  icon-right="fas fa-plug fa-rotate-270"
-                  @click="this.filter.system = control.source_type_a"
-                  style="align-items: center">
-                  {{ control.source_type_a }}
-                </q-chip>
-                <q-icon v-if="control.source_type_a && control.source_type_b" name="fas fa-ellipsis-h" size="15px" color="green-8" />
-                <q-chip
-                  v-if="control.source_type_b"
-                  clickable
-                  color="green-8"
-                  text-color="white"
-                  size="sm"
-                  icon="fas fa-plug fa-rotate-90"
-                  @click="this.filter.system = control.source_type_b"
-                  style="align-items: center">
-                  {{ control.source_type_b }}
-                </q-chip>
-
                 <q-chip v-if="control.status !== 'Y'" clickable size="sm" color="red-4" text-color="white" icon="fas fa-clock" @click="filter.status = 'N'">
                   Scheduler inactive
                 </q-chip>
@@ -227,6 +203,31 @@
                   @click="this.filter.other_attributes.push('Iterations')">
                   +{{ JSON.parse(control.iteration_config).length }} Iteration{{ JSON.parse(control.iteration_config).length > 1 ? "s" : "" }}
                 </q-chip>
+
+                <q-chip
+                  v-if="control.source_type_a"
+                  clickable
+                  color="green-8"
+                  text-color="white"
+                  size="sm"
+                  icon-right="fas fa-plug fa-rotate-270"
+                  @click="this.filter.system = control.source_type_a"
+                  style="align-items: center">
+                  {{ control.source_type_a }}
+                </q-chip>
+                <q-icon v-if="control.source_type_a && control.source_type_b" name="fas fa-wave-square" size="9px" color="green-8" />
+                <q-chip
+                  v-if="control.source_type_b"
+                  clickable
+                  color="green-8"
+                  text-color="white"
+                  size="sm"
+                  icon="fas fa-plug fa-rotate-90"
+                  @click="this.filter.system = control.source_type_b"
+                  style="align-items: center">
+                  {{ control.source_type_b }}
+                </q-chip>
+                
               </div>
             </td>
 

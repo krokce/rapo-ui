@@ -308,8 +308,6 @@
                     :options="[...new Set([...(datasourceAColumns ? datasourceAColumns : []), 'TAG'])]">
                   </q-select>
 
-                  <q-input class="col-1" outlined v-model="control.source_type_a" label="System A" maxlength="90" />
-
                   <q-select
                     v-if="control.control_type === 'CMP'"
                     class="col-2"
@@ -323,6 +321,8 @@
                       <q-icon name="far fa-calendar-alt" @click.stop.prevent />
                     </template>
                   </q-select>
+
+                  <q-input class="col-1" outlined v-model="control.source_type_a" label="System A" maxlength="90" />
 
                   <q-select
                     class="col"
@@ -355,8 +355,6 @@
                     :options="[...new Set([...(datasourceBColumns ? datasourceBColumns : []), 'TAG'])]">
                   </q-select>
 
-                  <q-input class="col-1" outlined v-model="control.source_type_b" label="System B" maxlength="90" />
-
                   <q-select
                     v-if="control.control_type === 'CMP'"
                     class="col-2"
@@ -370,6 +368,8 @@
                       <q-icon name="far fa-calendar-alt" @click.stop.prevent />
                     </template>
                   </q-select>
+
+                  <q-input class="col-1" outlined v-model="control.source_type_b" label="System B" maxlength="90" />
                 </div>
 
                 <div class="row q-gutter-md">

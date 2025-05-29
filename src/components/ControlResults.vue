@@ -101,14 +101,17 @@
               </q-chip>
             </td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
-              <strong>{{ toDateTimeString(control.start_date) }}</strong>
+              <div class="text-blue-grey-7">
+                <strong>{{ toDateString(control.start_date) }}</strong>
+                <span class="text-grey-7 q-px-sm">{{ toTimeString(control.start_date) }}</span>
+              </div>
             </td>
             <td class="text-center" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.duration_minutes, 2) }} min</td>
             <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.process_id }}</td>
             <td class="text-left text-weight-bold text-teal" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-btn
                 v-if="!this.getSearch"
-                size="xs"
+                size="7px"
                 color="grey-5"
                 round
                 flat
@@ -132,8 +135,8 @@
                 </span>
               </router-link>
             </td>
-            <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_from) }}</td>
-            <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_to) }}</td>
+            <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_from) }}</td>
+            <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_to) }}</td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <span
                 v-if="control.fetched_number_a > 0 && control.control_type === 'REP'"
@@ -319,6 +322,10 @@ export default {
     },
     toDateString(val) {
       var ret = new Date(val).toISOString("de-DE").substring(0, 10);
+      return ret;
+    },
+    toTimeString(val) {
+      var ret = new Date(val).toISOString("de-DE").substring(11, 19);
       return ret;
     },
     toDateTimeString(val) {
