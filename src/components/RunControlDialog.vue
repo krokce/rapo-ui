@@ -120,7 +120,7 @@ export default {
           "&date_from=" +
           this.selectDate.from +
           "&date_to=" +
-          this.selectDate.to +
+          this.selectDate.to +"T23:59:59" +
           (this.debug_mode ? "&debug_mode=true" : "");
       } else {
         url = "/api/run-control?name=" + this.run_control_name + "&date=" + this.selectDate + (this.debug_mode ? "&debug_mode=true" : "");

@@ -135,8 +135,12 @@
                 </span>
               </router-link>
             </td>
-            <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_from) }}</td>
-            <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control.date_to) }}</td>
+            <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">
+              {{ toDateString(control.date_from) }}
+            </td>
+            <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">
+              {{ toDateString(control.date_to) }}
+            </td>
             <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <span
                 v-if="control.fetched_number_a > 0 && control.control_type === 'REP'"
@@ -352,7 +356,7 @@ export default {
       });
     },
     reRun(control) {
-      console.log("Re-run control: " + JSON.stringify(control));
+      // console.log("Re-run control: " + JSON.stringify(control));
       this.$q
         .dialog({
           title: control.control_name,
@@ -360,19 +364,14 @@ export default {
             "Re-run for '" +
             this.toDateString(control.date_from) +
             "'" +
-            (control.date_from != control.date_to ? " - '" + this.toDateString(control.date_to) + "'" : "") +
+            (this.toDateString(control.date_from) != this.toDateString(control.date_to) ? " - '" + this.toDateString(control.date_to) + "'" : "") +
             "?",
           cancel: true,
           persistent: true,
         })
         .onOk(() => {
-          var url =
-            "/api/run-control?name=" +
-            control.control_name +
-            "&date_from=" +
-            this.toDateString(control.date_from) +
-            "&date_to=" +
-            this.toDateString(control.date_to);
+          var url = "/api/run-control?name=" + control.control_name + "&date_from=" + this.toDateTimeString(control.date_from) + "&date_to=" + this.toDateTimeString(control.date_to);
+
           fetch(url, {
             method: "POST",
             headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
