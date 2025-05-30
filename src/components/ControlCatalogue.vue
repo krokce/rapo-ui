@@ -376,39 +376,32 @@ export default {
     filteredControlCatalogue() {
       const s = this.getSearch;
       var data = this.controlCatalogue;
-      if (s) {
-        data = this.controlCatalogue.filter((item) => (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false));
-      }
-      if (this.filter.control_name) {
-        data = data.filter((item) => item.control_name.toUpperCase().indexOf(this.filter.control_name.toUpperCase()) > -1);
-      }
-
-      if (this.filter.type) {
-        data = data.filter((item) => item.control_type === this.filter.type);
-      }
-      if (this.filter.status) {
-        data = data.filter((item) => item.status === this.filter.status);
-      }
-      if (this.filter.system) {
-        data = data.filter(
-          (item) =>
-            item.source_type_a?.toUpperCase().indexOf(this.filter.system.toUpperCase()) > -1 ||
-            item.source_type_b?.toUpperCase().indexOf(this.filter.system.toUpperCase()) > -1
-        );
-      }
-      // iterate over other attributes and filter for each
-      if (this.filter.other_attributes && this.filter.other_attributes.length > 0) {
-        data = data.filter((item) => {
-          const attributes = this.filter.other_attributes;
+      if (s || this.filter.control_name || this.filter.type || this.filter.status || this.filter.system || (this.filter.other_attributes && this.filter.other_attributes.length > 0)) {
+        data = this.controlCatalogue.filter((item) => {
+          const matchesSearch = s ? item.control_name?.toUpperCase().includes(s.toUpperCase()) : true;
+          const matchesControlName = this.filter.control_name ? item.control_name?.toUpperCase().includes(this.filter.control_name.toUpperCase()) : true;
+          const matchesType = this.filter.type ? item.control_type === this.filter.type : true;
+          const matchesStatus = this.filter.status ? item.status === this.filter.status : true;
+          const matchesSystem = this.filter.system
+        ? item.source_type_a?.toUpperCase().includes(this.filter.system.toUpperCase()) ||
+          item.source_type_b?.toUpperCase().includes(this.filter.system.toUpperCase())
+        : true;
+          const matchesAttributes =
+        this.filter.other_attributes && this.filter.other_attributes.length > 0
+          ? this.filter.other_attributes.some((attr) => {
           return (
-            (attributes.includes("Preparation SQL") && item.preparation_sql) ||
-            (attributes.includes("Prerequisite SQL") && item.prerequisite_sql) ||
-            (attributes.includes("Completion SQL") && item.completion_sql) ||
-            (attributes.includes("Iterations") && item.iteration_config && JSON.parse(item.iteration_config).length > 0) ||
-            (attributes.includes("Case definition") && item.case_config) ||
-            (attributes.includes("Pre-run hook") && item.need_prerun_hook === "Y") ||
-            (attributes.includes("No Post-run hook") && item.need_postrun_hook !== "Y")
+            (attr === "Preparation SQL" && item.preparation_sql) ||
+            (attr === "Prerequisite SQL" && item.prerequisite_sql) ||
+            (attr === "Completion SQL" && item.completion_sql) ||
+            (attr === "Iterations" && item.iteration_config && JSON.parse(item.iteration_config).length > 0) ||
+            (attr === "Case definition" && item.case_config) ||
+            (attr === "Pre-run hook" && item.need_prerun_hook === "Y") ||
+            (attr === "No Post-run hook" && item.need_postrun_hook !== "Y")
           );
+            })
+          : true;
+
+          return matchesSearch && matchesControlName && matchesType && matchesStatus && matchesSystem && matchesAttributes;
         });
       }
 

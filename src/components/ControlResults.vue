@@ -61,13 +61,13 @@
     </div>
 
     <div>
-      <q-markup-table>
+      <q-markup-table dense>
         <thead>
           <tr class="bg-blue-grey-2">
             <th class="text-left">Type</th>
             <th class="text-left">Run timestamp</th>
-            <th class="text-center">Run duration</th>
-            <th class="text-left">PID</th>
+            <th class="text-right">Runtime</th>
+            <th class="text-center">PID</th>
             <th class="text-left">Processname</th>
             <th class="text-left">Run from</th>
             <th class="text-left">Run to</th>
@@ -103,11 +103,11 @@
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <div class="text-blue-grey-7">
                 <strong>{{ toDateString(control.start_date) }}</strong>
-                <span class="text-grey-7 q-px-sm">{{ toTimeString(control.start_date) }}</span>
+                <small class="text-grey-7 q-px-sm">{{ toTimeString(control.start_date) }}</small>
               </div>
             </td>
-            <td class="text-center" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.duration_minutes, 2) }} min</td>
-            <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.process_id }}</td>
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.duration_minutes, 0) }} min</td>
+            <td class="text-center text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.process_id }}</td>
             <td class="text-left text-weight-bold text-teal" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-btn
                 v-if="!this.getSearch"
@@ -183,7 +183,14 @@
               </span>
               <span v-else> {{ Number(control.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}% </span>
             </td>
-            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.prerequisite_value }}</td>
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+              <q-icon v-if="control.prerequisite_value == 0" class="cursor-pointer text-red" name="fas fa-stop">
+                <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Prerequisite SQL value is 0 </q-tooltip>
+              </q-icon>
+              <q-icon v-if="control.prerequisite_value" class="cursor-pointer text-green" name="fas fa-play">
+                <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Prerequisite SQL value is {{ control.prerequisite_value }} </q-tooltip>
+              </q-icon>
+            </td>
             <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-chip clickable class="cursor-pointer" @click="!this.filter.status.includes(control.status) && this.filter.status.push(control.status)">
                 <q-avatar v-if="control.status == 'I'" icon="fas fa-plus-circle" color="indigo" text-color="white" />
@@ -221,7 +228,7 @@
                 }}
               </q-chip>
             </td>
-            <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
+            <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }" style="width: 50px">
               <q-btn size="sm" color="grey-7" round flat icon="fas fa-ellipsis-v">
                 <q-menu>
                   <q-list dense class="text-no-wrap">
@@ -370,7 +377,13 @@ export default {
           persistent: true,
         })
         .onOk(() => {
-          var url = "/api/run-control?name=" + control.control_name + "&date_from=" + this.toDateTimeString(control.date_from) + "&date_to=" + this.toDateTimeString(control.date_to);
+          var url =
+            "/api/run-control?name=" +
+            control.control_name +
+            "&date_from=" +
+            this.toDateTimeString(control.date_from) +
+            "&date_to=" +
+            this.toDateTimeString(control.date_to);
 
           fetch(url, {
             method: "POST",
@@ -504,37 +517,14 @@ export default {
     filteredControlResults() {
       const s = this.getSearch;
       var data = this.controlResults;
-      if (s) {
-        data = this.controlResults.filter((item) => (item.control_name ? item.control_name.toUpperCase().indexOf(s.toUpperCase()) > -1 : false));
-      }
+      data = this.controlResults.filter((item) => {
+        const matchesSearch = s ? (item.control_name ? item.control_name.toUpperCase().includes(s.toUpperCase()) : false) : true;
+        const matchesControlName = this.filter.control_name ? item.control_name.toUpperCase().includes(this.filter.control_name.toUpperCase()) : true;
+        const matchesControlType = this.filter.type ? item.control_type === this.filter.type : true;
+        const matchesStatus = this.filter.status && this.filter.status.length > 0 ? this.filter.status.includes(item.status) : true;
 
-      // filter by control name
-      if (this.filter.control_name) {
-        data = data.filter((item) => item.control_name.toUpperCase().indexOf(this.filter.control_name.toUpperCase()) > -1);
-      }
-
-      // filter by control type
-      if (this.filter.type) {
-        data = data.filter((item) => item.control_type === this.filter.type);
-      }
-
-      // iterate over other attributes and filter for each
-      if (this.filter.status && this.filter.status.length > 0) {
-        data = data.filter((item) => {
-          const attributes = this.filter.status;
-          return (
-            (attributes.includes("I") && item.status == "I") ||
-            (attributes.includes("W") && item.status == "W") ||
-            (attributes.includes("S") && item.status == "S") ||
-            (attributes.includes("P") && item.status == "P") ||
-            (attributes.includes("F") && item.status == "F") ||
-            (attributes.includes("D") && item.status == "D") ||
-            (attributes.includes("E") && item.status == "E") ||
-            (attributes.includes("C") && item.status == "C") ||
-            (attributes.includes("X") && item.status == "X")
-          );
-        });
-      }
+        return matchesSearch && matchesControlName && matchesControlType && matchesStatus;
+      });
       return data;
     },
     filteredControlResultsLen() {
