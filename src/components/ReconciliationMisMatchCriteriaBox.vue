@@ -2,7 +2,7 @@
   <div class="col q-gutter-y-md">
     <q-card class="q-pa-sm" flat bordered>
       <q-item-section class="q-ma-xs">
-        <q-item-label>Mismatch criteria</q-item-label>
+        <q-item-label>Mismatch criteria (discrepancy config)</q-item-label>
       </q-item-section>
 
       <q-card-section class="q-gutter-xs">

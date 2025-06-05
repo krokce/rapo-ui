@@ -186,15 +186,6 @@
                     </q-tooltip>
                   </q-input>
 
-                  <q-input class="col" v-model.number="control.output_limit" type="number" outlined label="Output limit">
-                    <template v-slot:prepend>
-                      <q-icon name="fas fa-list-ol" @click.stop.prevent />
-                    </template>
-                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-                      Limit the number of records in the output table. <br />Leave empty for no limit.
-                    </q-tooltip>
-                  </q-input>
-
                   <q-select
                     class="col"
                     outlined
@@ -391,6 +382,21 @@
                     </template>
                   </q-select>
 
+                  <q-input
+                    v-if="control.control_type === 'ANL' || control.control_type === 'REP'"
+                    class="col-2"
+                    v-model.number="control.output_limit"
+                    type="number"
+                    outlined
+                    label="Output limit">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-list-ol" @click.stop.prevent />
+                    </template>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      Limit the number of records in the output table. <br />Leave empty for no limit.
+                    </q-tooltip>
+                  </q-input>
+
                   <div v-if="control.control_type === 'CMP'" class="col">
                     <comparison-output-table-box
                       class="col"
@@ -399,6 +405,21 @@
                       :datasource-b-columns="this.datasourceBColumns">
                     </comparison-output-table-box>
                   </div>
+
+                  <q-input
+                    v-if="control.control_type === 'CMP'"
+                    class="col-2"
+                    v-model.number="control.output_limit"
+                    type="number"
+                    outlined
+                    label="Output limit">
+                    <template v-slot:prepend>
+                      <q-icon name="fas fa-list-ol" @click.stop.prevent />
+                    </template>
+                    <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                      Limit the number of records in the output table. <br />Leave empty for no limit.
+                    </q-tooltip>
+                  </q-input>
 
                   <q-select
                     v-if="control.control_type === 'REC'"
@@ -782,7 +803,14 @@
                       <td class="text-left">
                         <strong>{{ toDateTimeString(control_log.end_date) }}</strong>
                       </td>
-                      <td class="text-right">{{ (control_log.end_date && control_log.start_date)?round((new Date(control_log.end_date) - new Date(control_log.start_date)) / 60000, 1):'0' }} min</td>
+                      <td class="text-right">
+                        {{
+                          control_log.end_date && control_log.start_date
+                            ? round((new Date(control_log.end_date) - new Date(control_log.start_date)) / 60000, 1)
+                            : "0"
+                        }}
+                        min
+                      </td>
 
                       <td class="text-left text-weight-bold text-blue-grey-7">
                         {{ control_log.process_id }}
@@ -1164,6 +1192,8 @@ export default {
           need_issues_b: true,
           need_recons_a: false,
           need_recons_b: false,
+          output_limit_a: null,
+          output_limit_b: null,
           allow_duplicates: false,
           correlation_limit: true,
           time_shift_from: 0,
