@@ -7,6 +7,7 @@
 
       <q-card-section class="row q-gutter-sm">
         <q-checkbox
+          size="lg"
           color="blue"
           class="col-2"
           label="Write A not in B discrepancies"
@@ -16,6 +17,7 @@
           " />
 
         <q-checkbox
+          size="lg"
           color="blue"
           class="col-2"
           label="Write A matches"
@@ -42,6 +44,7 @@
 
       <q-card-section class="row q-gutter-sm">
         <q-checkbox
+          size="lg"
           color="blue"
           class="col-2"
           label="Write B not in A discrepancies"
@@ -51,6 +54,7 @@
           " />
 
         <q-checkbox
+          size="lg"
           color="blue"
           class="col-2"
           label="Write B matches"
@@ -76,11 +80,11 @@
       </q-card-section>
 
       <q-card-section class="row q-gutter-sm">
-        <q-checkbox class="col-2" color="blue" label="Allow duplicates" v-model="ruleConfigObject.allow_duplicates">
+        <q-checkbox size="lg" class="col-2" color="blue" label="Allow duplicates" v-model="ruleConfigObject.allow_duplicates">
           <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]"> If active, duplicate records won't be treated as discrepancies </q-tooltip>
         </q-checkbox>
 
-        <q-checkbox class="col-2" color="blue" label="Force correlation limit" v-model="ruleConfigObject.correlation_limit">
+        <q-checkbox size="lg" class="col-2" color="blue" label="Force correlation limit" v-model="ruleConfigObject.correlation_limit">
           <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]">
             If active, the correlation dataset will be limited to x2.5 times of the larger datasource record-count to prevent huge resultsets caused by weak or
             missing match criteria (cross join)

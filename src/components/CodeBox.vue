@@ -202,10 +202,17 @@ export default {
 
 <style>
 .cm-editor {
-  /* min-height: 56px; */
+  min-height: 56px;
+  max-height: 20em;
   border: 1px solid #bbb;
   border-radius: 0.25em;
   outline: none;
+}
+
+.cm-gutters {
+  min-height: 56px !important; /* Matches the min-height of .cm-editor */
+  border-right: 1px solid #bbb;
+  box-sizing: border-box; /* Ensures padding and borders are included in the height calculation */
 }
 
 .cm-editor:hover {
@@ -232,18 +239,4 @@ export default {
 .cm-focused .cm-activeLineGutter {
   background: rgba(100, 100, 100, 0.1) !important;
 }
-
-/* 
-.cm-activeLine {
-  background-color: #f29f9f;
-}
-
-.cm-activeLineGutter {
-  background: #f29f9f;
-} 
-
-.cm-selectionBackground {
-  background: #f29f9f;
-} 
-*/
 </style>
