@@ -8,6 +8,7 @@
       <q-card-section class="q-gutter-xs">
         <div class="row q-gutter-xs items-center" v-for="(item, index) in ruleConfigObject.discrepancy_config" v-bind:key="index">
           <q-select
+            v-if="!ruleConfigObject.discrepancy_config[index].formula_mode"
             use-input
             hide-selected
             fill-input
@@ -15,14 +16,25 @@
             outlined
             @filter="filterFieldListA"
             v-model="ruleConfigObject.discrepancy_config[index].field_a"
-            new-value-mode="add"
-            hide-dropdown-icon
             :options="datasourceAList"
             label="Field A" />
+
+          <q-input
+            v-if="ruleConfigObject.discrepancy_config[index].formula_mode"
+            outlined
+            class="col-2"
+            v-model="ruleConfigObject.discrepancy_config[index].field_a"
+            label="Field A">
+            <template v-slot:append>
+              <q-icon name="fas fa-calculator" @click.stop.prevent />
+            </template>
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Aways use 'a.' as prefix to DB fields in formula mode </q-tooltip>
+          </q-input>
 
           <q-icon name="fas fa-equals" size="20px" color="blue-grey-3" />
 
           <q-select
+            v-if="!ruleConfigObject.discrepancy_config[index].formula_mode"
             use-input
             hide-selected
             fill-input
@@ -30,31 +42,35 @@
             outlined
             @filter="filterFieldListB"
             v-model="ruleConfigObject.discrepancy_config[index].field_b"
-            new-value-mode="add"
-            hide-dropdown-icon
             :options="datasourceBList"
             label="Field B" />
+
+          <q-input
+            v-if="ruleConfigObject.discrepancy_config[index].formula_mode"
+            outlined
+            class="col-2"
+            v-model="ruleConfigObject.discrepancy_config[index].field_b"
+            label="Field B">
+            <template v-slot:append>
+              <q-icon name="fas fa-calculator" @click.stop.prevent />
+            </template>
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Always use 'b.' as prefix to DB fields in formula mode </q-tooltip>
+          </q-input>
 
           <q-icon name="fas fa-circle" size="15px" color="blue-grey-3" />
 
           <q-input
             outlined
-            class="col-2"
+            class="col-1"
             v-model.number="ruleConfigObject.discrepancy_config[index].numeric_tolerance_from"
             type="number"
             label="Tolerance from">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-long-arrow-alt-left" @click.stop.prevent />
-            </template>
             <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
               Lower comparison tolerance value (match if A minus B is greater than this value)
             </q-tooltip>
           </q-input>
 
-          <q-input outlined class="col-2" v-model.number="ruleConfigObject.discrepancy_config[index].numeric_tolerance_to" type="number" label="Tolerance to">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-long-arrow-alt-right" @click.stop.prevent />
-            </template>
+          <q-input outlined class="col-1" v-model.number="ruleConfigObject.discrepancy_config[index].numeric_tolerance_to" type="number" label="Tolerance to">
             <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Upper tolerance value (match if A minus B is lower than this value) </q-tooltip>
           </q-input>
 
@@ -72,9 +88,52 @@
             ]"
             label="Percentage">
             <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-              If set to "Yes" difference incl. tolerance values will be treated as percentages
+              In "Percentage mode" the difference incl. tolerance values will be treated as percentages
             </q-tooltip>
           </q-select>
+
+          <q-icon name="fas fa-circle" size="15px" color="blue-grey-3" />
+
+          <q-select
+            class="col-1"
+            outlined
+            emit-value
+            map-options
+            v-model="ruleConfigObject.discrepancy_config[index].formula_mode"
+            :options="[
+              { label: 'Yes', value: true },
+              { label: 'No', value: false },
+            ]"
+            label="Formula"
+            @update:model-value="
+              (value) => {
+                ruleConfigObject.discrepancy_config[index].formula_mode = value;
+                if (value) {
+                  ruleConfigObject.discrepancy_config[index].formula_alias = ruleConfigObject.discrepancy_config[index].field_a;
+                  ruleConfigObject.discrepancy_config[index].field_a = 'a.' + ruleConfigObject.discrepancy_config[index].field_a;
+                  ruleConfigObject.discrepancy_config[index].field_b = 'b.' + ruleConfigObject.discrepancy_config[index].field_b;
+                } else {
+                  ruleConfigObject.discrepancy_config[index].field_a = datasourceAColumns[0];
+                  ruleConfigObject.discrepancy_config[index].field_b = datasourceBColumns[0];
+                }
+              }
+            ">
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+              In "Formula mode" you can use expressions instead of field names, e.g. "a.AMOUNT + a.TAX"
+            </q-tooltip>
+          </q-select>
+          <q-input
+            v-if="ruleConfigObject.discrepancy_config[index].formula_mode"
+            outlined
+            class="col-2"
+            v-model="ruleConfigObject.discrepancy_config[index].formula_alias"
+            label="Formula alias">
+            <template v-slot:prepend>
+              <q-icon name="fas fa-font" @click.stop.prevent />
+            </template>
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Name to be used when presenting the discrepancies </q-tooltip>
+          </q-input>
+
           <q-btn size="sm" color="primary" flat round icon="fas fa-minus" @click="removeCorrelationConfig(index)" />
           <q-btn
             v-if="index == ruleConfigObject.discrepancy_config.length - 1"
@@ -116,6 +175,8 @@ export default {
         numeric_tolerance_from: 0,
         numeric_tolerance_to: 0,
         percentage_mode: false,
+        formula_mode: false,
+        formula_alias: null,
       });
     },
     removeCorrelationConfig(index) {
