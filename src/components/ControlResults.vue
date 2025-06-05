@@ -106,7 +106,7 @@
                 <small class="text-grey-7 q-px-sm">{{ toTimeString(control.start_date) }}</small>
               </div>
             </td>
-            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.duration_minutes, 0) }} min</td>
+            <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ round(control.duration_minutes, 1) }} min</td>
             <td class="text-center text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ control.process_id }}</td>
             <td class="text-left text-weight-bold text-teal" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-btn

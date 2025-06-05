@@ -756,6 +756,7 @@
                       <th class="text-left">Added</th>
                       <th class="text-left">Start</th>
                       <th class="text-left">End</th>
+                      <th class="text-left">Runtime</th>
                       <th class="text-left">PID</th>
                       <th class="text-left">Run from</th>
                       <th class="text-left">Run to</th>
@@ -781,11 +782,14 @@
                       <td class="text-left">
                         <strong>{{ toDateTimeString(control_log.end_date) }}</strong>
                       </td>
+                      <td class="text-right">{{ (control_log.end_date && control_log.start_date)?round((new Date(control_log.end_date) - new Date(control_log.start_date)) / 60000, 1):'0' }} min</td>
+
                       <td class="text-left text-weight-bold text-blue-grey-7">
                         {{ control_log.process_id }}
                       </td>
                       <td class="text-left">{{ toDateString(control_log.date_from) }}</td>
                       <td class="text-left">{{ toDateString(control_log.date_to) }}</td>
+
                       <td class="text-right">
                         <span>
                           {{
@@ -829,7 +833,16 @@
                           {{ Number(control_log.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
                         </span>
                       </td>
-                      <td class="text-right">{{ control_log.prerequisite_value }}</td>
+                      <td class="text-right">
+                        <q-icon v-if="control_log.prerequisite_value == 0" class="cursor-pointer text-red" name="fas fa-stop">
+                          <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Prerequisite SQL value is 0 </q-tooltip>
+                        </q-icon>
+                        <q-icon v-if="control_log.prerequisite_value" class="cursor-pointer text-green" name="fas fa-play">
+                          <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
+                            Prerequisite SQL value is {{ control_log.prerequisite_value }}
+                          </q-tooltip>
+                        </q-icon>
+                      </td>
                       <td class="text-left">
                         <q-chip class="cursor-pointer">
                           <q-avatar v-if="control_log.status == 'I'" icon="fas fa-plus-circle" color="indigo" text-color="white" />
