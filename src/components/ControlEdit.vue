@@ -498,7 +498,8 @@
                 </div>
 
                 <div class="col q-my-lg q-gutter-y-md" v-if="control.control_type === 'REC'">
-                  <reconciliation-discrepancy-checkboxes class="col" :control="control" v-model="this.ruleConfigObject"> </reconciliation-discrepancy-checkboxes>
+                  <reconciliation-discrepancy-checkboxes class="col" :control="control" v-model="this.ruleConfigObject">
+                  </reconciliation-discrepancy-checkboxes>
 
                   <q-card class="q-pa-sm" flat bordered>
                     <q-item-section class="q-ma-xs">
@@ -789,21 +790,31 @@
                       <th class="text-right">Err. lvl B [%]</th>
                       <th class="text-right">PV</th>
                       <th class="text-left">Status</th>
+                      <th class="text-left"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr class="cursor-pointer" v-for="(control_log, index) in controlLogs" :key="control_log.process_id" @click="showFullLog(control_log)">
-                      <td class="text-left">{{ index + 1 }}. &nbsp;</td>
-                      <td class="text-left">
-                        <strong>{{ toDateTimeString(control_log.added) }}</strong>
+                    <tr class="cursor-pointer" v-for="(control_log, index) in controlLogs" :key="control_log.process_id">
+                      <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ index + 1 }}. &nbsp;</td>
+                      <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <div class="text-blue-grey-7">
+                          <strong>{{ toDateString(control_log.added) }}</strong>
+                          <small class="text-grey-7 q-px-sm">{{ toTimeString(control_log.added) }}</small>
+                        </div>
                       </td>
-                      <td class="text-left">
-                        <strong>{{ toDateTimeString(control_log.start_date) }}</strong>
+                      <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <div class="text-blue-grey-7">
+                          <strong>{{ toDateString(control_log.start_date) }}</strong>
+                          <small class="text-grey-7 q-px-sm">{{ toTimeString(control_log.start_date) }}</small>
+                        </div>
                       </td>
-                      <td class="text-left">
-                        <strong>{{ toDateTimeString(control_log.end_date) }}</strong>
+                      <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <div class="text-blue-grey-7">
+                          <strong>{{ toDateString(control_log.end_date) }}</strong>
+                          <small class="text-grey-7 q-px-sm">{{ toTimeString(control_log.end_date) }}</small>
+                        </div>
                       </td>
-                      <td class="text-right">
+                      <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
                         {{
                           control_log.end_date && control_log.start_date
                             ? round((new Date(control_log.end_date) - new Date(control_log.start_date)) / 60000, 1)
@@ -812,56 +823,59 @@
                         min
                       </td>
 
-                      <td class="text-left text-weight-bold text-blue-grey-7">
+                      <td class="text-left text-weight-bold text-blue-grey-7" :class="{ 'new-day-separator': newDaySeparator(index) }">
                         {{ control_log.process_id }}
                       </td>
-                      <td class="text-left">{{ toDateString(control_log.date_from) }}</td>
-                      <td class="text-left">{{ toDateString(control_log.date_to) }}</td>
+                      <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control_log.date_from) }}</td>
+                      <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">{{ toDateString(control_log.date_to) }}</td>
 
-                      <td class="text-right">
-                        <span>
-                          {{
-                            (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            })
-                          }}
+                      <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <span
+                          v-if="(Number(control_log.fetched_number_a) + Number(control_log.fetched_number)) > 0 && control.control_type === 'REP'"
+                          class="cursor-pointer text-red"
+                          @click="copyToClipboard(control_log, 'A')">
+                          {{ (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        </span>
+                        <span v-else>
+                          {{ (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
                         </span>
                       </td>
-                      <td class="text-right">
-                        {{ Number(control_log.fetched_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                      <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        {{ (Number(control_log.fetched_number_b) + Number(control_log.fetched_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
                       </td>
-                      <td class="text-right">
-                        <span>
-                          {{
-                            (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            })
-                          }}
+                      <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <span v-if="(Number(control_log.error_number_a) + Number(control_log.error_number)) > 0" class="cursor-pointer text-red" @click="copyToClipboard(control_log, 'A')">
+                          {{ (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        </span>
+                        <span v-else>
+                          {{ (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
                         </span>
                       </td>
-                      <td class="text-right">
-                        <span>
+                      <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <span v-if="control_log.error_number_b > 0" class="cursor-pointer text-red" @click="copyToClipboard(control_log, 'B')">
+                          {{ (Number(control_log.error_number_b)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        </span>
+                        <span v-else>
                           {{ Number(control_log.error_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
                         </span>
                       </td>
-                      <td class="text-right">
-                        <span>
-                          {{
-                            (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })
-                          }}%
+                      <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <span v-if="(Number(control_log.error_level_a) + Number(control_log.error_level)) > 0" class="cursor-pointer text-red" @click="copyToClipboard(control_log, 'A')">
+                          {{ (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+                        </span>
+                        <span v-else>
+                          {{ (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
                         </span>
                       </td>
-                      <td class="text-right">
-                        <span>
+                      <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <span v-if="control_log.error_level_b > 0" class="cursor-pointer text-red" @click="copyToClipboard(control_log, 'B')">
+                          {{ Number(control_log.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+                        </span>
+                        <span v-else>
                           {{ Number(control_log.error_level_b).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
                         </span>
                       </td>
-                      <td class="text-right">
+                      <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
                         <q-icon v-if="control_log.prerequisite_value == 0" class="cursor-pointer text-red" name="fas fa-stop">
                           <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Prerequisite SQL value is 0 </q-tooltip>
                         </q-icon>
@@ -871,7 +885,7 @@
                           </q-tooltip>
                         </q-icon>
                       </td>
-                      <td class="text-left">
+                      <td class="text-left" :class="{ 'new-day-separator': newDaySeparator(index) }">
                         <q-chip class="cursor-pointer">
                           <q-avatar v-if="control_log.status == 'I'" icon="fas fa-plus-circle" color="indigo" text-color="white" />
                           <q-avatar v-if="control_log.status == 'W'" icon="fas fa-pause-circle" color="amber-7" text-color="white" />
@@ -907,6 +921,48 @@
                               : "Unknown"
                           }}
                         </q-chip>
+                      </td>
+                      <td class="text-left" style="width: 50px" :class="{ 'new-day-separator': newDaySeparator(index) }">
+                        <q-btn size="sm" color="grey-7" round flat icon="fas fa-ellipsis-v">
+                          <q-menu>
+                            <q-list dense class="text-no-wrap">
+                              <q-item dense clickable @click="reRun(control_log)" v-close-popup>
+                                <q-item-section> Re-run </q-item-section>
+                              </q-item>
+                              <q-separator />
+                              <q-item
+                                v-if="
+                                  control_log.status == 'F' ||
+                                  control_log.status == 'I' ||
+                                  control_log.status == 'W' ||
+                                  control_log.status == 'S' ||
+                                  control_log.status == 'P'
+                                "
+                                dense
+                                clickable
+                                class="col items-center"
+                                @click="showCancelDialog(control_log)"
+                                v-close-popup>
+                                <q-item-section> Cancel run </q-item-section>
+                              </q-item>
+                              <q-item
+                                v-if="control_log.status != 'X'"
+                                dense
+                                clickable
+                                class="col items-center"
+                                @click="showRevokeDialog(control_log)"
+                                v-close-popup>
+                                <q-item-section> Revoke run </q-item-section>
+                              </q-item>
+                              <q-item dense clickable class="col items-center" @click="showFullLog(control_log)" v-close-popup>
+                                <q-item-section> Show full log </q-item-section>
+                              </q-item>
+                              <q-item dense clickable @click="dropTemporaryTables(control_log)" v-close-popup>
+                                <q-item-section> Drop temporary tables </q-item-section>
+                              </q-item>
+                            </q-list>
+                          </q-menu>
+                        </q-btn>
                       </td>
                     </tr>
                   </tbody>
@@ -1026,11 +1082,15 @@ export default {
   },
   methods: {
     ...mapActions(["updateControlCatalogue"]),
-    updateLogDaysBack(days) {
-      this.getControlLogs(this.control.control_name, days);
+    updateLogDaysBack() {
+      this.getControlLogs(this.control.control_name, this.log_days_back);
     },
     toDateString(val) {
       var ret = new Date(val).toISOString("de-DE").substring(0, 10);
+      return ret;
+    },
+    toTimeString(val) {
+      var ret = new Date(val).toISOString("de-DE").substring(11, 19);
       return ret;
     },
     toDateTimeString(val) {
@@ -1531,7 +1591,6 @@ export default {
 
       // REC rule
       if (this.control.control_type === "REC") {
-
         // output limit should not be used for REC rules - instead use output_limit_a and output_limit_b in rule_config
         this.control.output_limit = null;
 
@@ -1737,6 +1796,187 @@ export default {
           // console.log('Cancel')
         });
     },
+    copyToClipboard(control, side) {
+      control.control_name = this.control.control_name;
+      control.control_type = this.control.control_type;
+
+      var table_suffix = "T";
+      if (control.control_type == "REC") {
+        table_suffix = side;
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = "select * from RAPO_RES" + table_suffix + "_" + control.control_name + " where RAPO_PROCESS_ID = " + control.process_id + ";";
+      textarea.style.position = "fixed";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        this.$q.notify({ type: "positive", message: "SQL statement copied to clipboard: " + textarea.value });
+      } catch (err) {
+        this.$q.notify({ type: "negative", message: "Failed to copy SQL to clipboard" });
+      }
+      document.body.removeChild(textarea);
+    },
+    newDaySeparator(index) {
+      if (index > 0) {
+        const prev_date = this.toDateString(this.controlLogs[index - 1].added);
+        const curr_date = this.toDateString(this.controlLogs[index].added);
+        if (prev_date != curr_date) {
+          return true;
+        }
+      }
+      return false;
+    },
+    reRun(control) {
+      control.control_name = this.control.control_name;
+
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message:
+            "Re-run for '" +
+            this.toDateString(control.date_from) +
+            "'" +
+            (this.toDateString(control.date_from) != this.toDateString(control.date_to) ? " - '" + this.toDateString(control.date_to) + "'" : "") +
+            "?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          var url =
+            "/api/run-control?name=" +
+            control.control_name +
+            "&date_from=" +
+            this.toDateTimeString(control.date_from) +
+            "&date_to=" +
+            this.toDateTimeString(control.date_to);
+
+          fetch(url, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "Control " + control.control_name + " queued for execution" });
+                return response.json();
+              } else {
+                this.$q.notify({ type: "negative", message: "Control " + control.control_name + " failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+              this.getControlLogs(this.control.control_name, this.log_days_back);
+              // this.refreshControlResults();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
+    },
+    showCancelDialog(control) {
+      control.control_name = this.control.control_name;
+
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message: "Do you really want to stop the execution of this control?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          fetch("/api/cancel-control?id=" + control.process_id, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "Control run '" + control.control_name + " PID:" + control.process_id + "' was canceled" });
+                control.status = "C";
+              } else {
+                this.$q.notify({ type: "negative", message: "Stopping control run '" + control.control_name + " PID:" + control.process_id + "' failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
+    },
+    showRevokeDialog(control) {
+      control.control_name = this.control.control_name;
+
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message: "Do you really want to revoke this control run?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          fetch("/api/revoke-control-run?id=" + control.process_id, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "Control run '" + control.control_name + " PID:" + control.process_id + "' was revoked" });
+                control.status = "X";
+              } else {
+                this.$q.notify({ type: "negative", message: "Revoke of control run '" + control.control_name + " PID:" + control.process_id + "' failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
+    },
+    dropTemporaryTables(control) {
+      control.control_name = this.control.control_name;
+
+      this.$q
+        .dialog({
+          title: control.control_name,
+          message: "Do you really want to drop all debug temporary tables for execution with PID: " + control.process_id + " ?",
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(() => {
+          fetch("/api/delete-control-temporary-tables?id=" + control.process_id, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${this.$store.getters.getToken}`, "Content-Type": "application/json" },
+          })
+            .then((response) => {
+              if (response.ok) {
+                this.$q.notify({ type: "positive", message: "All temporary tables for PID:" + control.process_id + " were deleted" });
+              } else {
+                this.$q.notify({ type: "negative", message: "Temporary tables deletion for PID:" + control.process_id + "' failed" });
+              }
+            })
+            .then(() => {
+              this.$q.loadingBar.stop();
+            });
+        })
+        .onCancel(() => {
+          this.$q.notify({ message: "No action taken" });
+          // console.log('Cancel')
+        });
+    },
+    startControlLogsRefreshTimer() {
+      this.refreshTimer = setInterval(this.updateLogDaysBack, 5000);
+    },
+    stopControlLogsRefreshTimer() {
+      clearInterval(this.refreshTimer);
+    },
   },
   watch: {
     "control.source_name": function (newDatasource, oldDatasource) {
@@ -1812,7 +2052,7 @@ export default {
         delete this.control.control_id;
         this.control.control_name = this.control.control_name + "_CLONE";
       }
-
+      this.startControlLogsRefreshTimer();
       this.initializeControl();
     } else {
       // NEW CONTROL
@@ -1835,7 +2075,14 @@ export default {
       };
     }
   },
+  unmounted() {
+    this.stopControlLogsRefreshTimer();
+  },
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="css" scoped>
+.new-day-separator {
+  border-top: 2px solid #cfd8dc !important;
+}
+</style>

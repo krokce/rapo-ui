@@ -65,7 +65,7 @@
         <thead>
           <tr class="bg-blue-grey-2">
             <th class="text-left">Type</th>
-            <th class="text-left">Run timestamp</th>
+            <th class="text-left">Start</th>
             <th class="text-right">Runtime</th>
             <th class="text-center">PID</th>
             <th class="text-left">Processname</th>
