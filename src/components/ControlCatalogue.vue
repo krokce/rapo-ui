@@ -408,7 +408,7 @@ export default {
       return data;
     },
     filteredControlCatalogueLen() {
-      return this.controlCatalogue.length;
+      return this.filteredControlCatalogue.length;
     },
   },
   async mounted() {
