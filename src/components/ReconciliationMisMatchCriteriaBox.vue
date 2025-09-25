@@ -64,13 +64,18 @@
             class="col-1"
             v-model.number="ruleConfigObject.discrepancy_config[index].numeric_tolerance_from"
             type="number"
+            step="0.1"
             label="Tolerance from">
-            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-              Lower comparison tolerance value (match if A minus B is greater than this value)
-            </q-tooltip>
+            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Lower tolerance value (match if A minus B is greater than this value) </q-tooltip>
           </q-input>
 
-          <q-input outlined class="col-1" v-model.number="ruleConfigObject.discrepancy_config[index].numeric_tolerance_to" type="number" label="Tolerance to">
+          <q-input
+            outlined
+            class="col-1"
+            v-model.number="ruleConfigObject.discrepancy_config[index].numeric_tolerance_to"
+            type="number"
+            step="0.1"
+            label="Tolerance to">
             <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Upper tolerance value (match if A minus B is lower than this value) </q-tooltip>
           </q-input>
 
