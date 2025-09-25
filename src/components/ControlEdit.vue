@@ -498,7 +498,7 @@
                 </div>
 
                 <div class="col q-my-lg q-gutter-y-md" v-if="control.control_type === 'REC'">
-                  <reconciliation-discrepancy-checkboxes class="col" v-model="this.ruleConfigObject"> </reconciliation-discrepancy-checkboxes>
+                  <reconciliation-discrepancy-checkboxes class="col" :control="control" v-model="this.ruleConfigObject"> </reconciliation-discrepancy-checkboxes>
 
                   <q-card class="q-pa-sm" flat bordered>
                     <q-item-section class="q-ma-xs">
@@ -1185,6 +1185,7 @@ export default {
       this.control.output_table_columns = [];
       this.control.output_table_a_columns = [];
       this.control.output_table_b_columns = [];
+      this.control.output_limit = null;
 
       if (newValue === "REC") {
         this.ruleConfigObject = {
@@ -1530,6 +1531,10 @@ export default {
 
       // REC rule
       if (this.control.control_type === "REC") {
+
+        // output limit should not be used for REC rules - instead use output_limit_a and output_limit_b in rule_config
+        this.control.output_limit = null;
+
         if (!this.control.output_table_a_columns) {
           this.control.output_table_a = null;
         } else {

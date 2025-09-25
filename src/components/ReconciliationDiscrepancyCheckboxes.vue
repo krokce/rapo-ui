@@ -99,7 +99,7 @@
 
 <script>
 export default {
-  props: ["modelValue"],
+  props: ["modelValue", "control"],
   emits: ["update:modelValue"],
   data() {
     return {
@@ -113,6 +113,14 @@ export default {
     modelValue(newValue) {
       this.ruleConfigObject = newValue;
     },
+  },
+  mounted() {
+    if (!this.ruleConfigObject.output_limit_a) {
+      this.ruleConfigObject.output_limit_a = this.control.output_limit;
+    }
+    if (!this.ruleConfigObject.output_limit_b) {
+      this.ruleConfigObject.output_limit_b = this.control.output_limit;
+    }
   },
 };
 </script>
