@@ -498,9 +498,6 @@
                 </div>
 
                 <div class="col q-my-lg q-gutter-y-md" v-if="control.control_type === 'REC'">
-                  <reconciliation-discrepancy-checkboxes class="col" :control="control" v-model="this.ruleConfigObject">
-                  </reconciliation-discrepancy-checkboxes>
-
                   <q-card class="q-pa-sm" flat bordered>
                     <q-item-section class="q-ma-xs">
                       <q-item-label>Time dimension</q-item-label>
@@ -630,6 +627,10 @@
                     :datasource-a-columns="this.datasourceANumColumns"
                     :datasource-b-columns="this.datasourceBNumColumns">
                   </reconciliation-mis-match-criteria-box>
+
+                  <reconciliation-discrepancy-checkboxes class="col" :control="control" v-model="this.ruleConfigObject">
+                  </reconciliation-discrepancy-checkboxes>
+                  <br />
                 </div>
 
                 <div class="row q-my-md q-gutter-md">
@@ -831,40 +832,81 @@
 
                       <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
                         <span
-                          v-if="(Number(control_log.fetched_number_a) + Number(control_log.fetched_number)) > 0 && control.control_type === 'REP'"
+                          v-if="Number(control_log.fetched_number_a) + Number(control_log.fetched_number) > 0 && control.control_type === 'REP'"
                           class="cursor-pointer text-red"
                           @click="copyToClipboard(control_log, 'A')">
-                          {{ (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                          {{
+                            (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })
+                          }}
                         </span>
                         <span v-else>
-                          {{ (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                          {{
+                            (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })
+                          }}
                         </span>
                       </td>
                       <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
-                        {{ (Number(control_log.fetched_number_b) + Number(control_log.fetched_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        {{
+                          (Number(control_log.fetched_number_b) + Number(control_log.fetched_number)).toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })
+                        }}
                       </td>
                       <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
-                        <span v-if="(Number(control_log.error_number_a) + Number(control_log.error_number)) > 0" class="cursor-pointer text-red" @click="copyToClipboard(control_log, 'A')">
-                          {{ (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                        <span
+                          v-if="Number(control_log.error_number_a) + Number(control_log.error_number) > 0"
+                          class="cursor-pointer text-red"
+                          @click="copyToClipboard(control_log, 'A')">
+                          {{
+                            (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })
+                          }}
                         </span>
                         <span v-else>
-                          {{ (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                          {{
+                            (Number(control_log.error_number_a) + Number(control_log.error_number)).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })
+                          }}
                         </span>
                       </td>
                       <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
                         <span v-if="control_log.error_number_b > 0" class="cursor-pointer text-red" @click="copyToClipboard(control_log, 'B')">
-                          {{ (Number(control_log.error_number_b)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
+                          {{ Number(control_log.error_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
                         </span>
                         <span v-else>
                           {{ Number(control_log.error_number_b).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }}
                         </span>
                       </td>
                       <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
-                        <span v-if="(Number(control_log.error_level_a) + Number(control_log.error_level)) > 0" class="cursor-pointer text-red" @click="copyToClipboard(control_log, 'A')">
-                          {{ (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+                        <span
+                          v-if="Number(control_log.error_level_a) + Number(control_log.error_level) > 0"
+                          class="cursor-pointer text-red"
+                          @click="copyToClipboard(control_log, 'A')">
+                          {{
+                            (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })
+                          }}%
                         </span>
                         <span v-else>
-                          {{ (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}%
+                          {{
+                            (Number(control_log.error_level_a) + Number(control_log.error_level)).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })
+                          }}%
                         </span>
                       </td>
                       <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
