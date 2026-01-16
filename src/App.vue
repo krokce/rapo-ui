@@ -8,6 +8,10 @@
           <q-icon name="fas fa-poll" color="teal" size="40px" />
           <q-toolbar-title shrink class="column text-left">
             <span class="text-weight-bold">Rapo</span>
+            <span class="text-caption">
+              {{ getEnvInfo && getEnvInfo.instance_name ? getEnvInfo.instance_name : "" }}
+              {{ getEnvVersion && getEnvVersion.version ? "v." + getEnvVersion.version : "" }}</span
+            >
           </q-toolbar-title>
         </q-btn>
 
@@ -22,7 +26,11 @@
         <span class="text-caption text-weight-light text-teal" v-if="getTokenIsValid">Connected</span>
         <span class="text-caption text-weight-light text-red" v-if="!getTokenIsValid">Disconnected</span>
         <q-btn round flat color="teal" icon="fas fa-plug fa-rotate-90" @click="disconnect" v-if="getTokenIsValid">
-          <q-tooltip>Disconnect</q-tooltip>
+          <q-tooltip>
+            Disconnect from:<br />
+            <div><strong>Server:</strong>&nbsp;{{ getEnvInfo && getEnvInfo.database_server ? getEnvInfo.database_server : "N/A" }}</div>
+            <div><strong>Database:</strong>&nbsp;{{ getEnvInfo && getEnvInfo.database_name ? getEnvInfo.database_name : "N/A" }}</div>
+          </q-tooltip>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -89,7 +97,7 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["hideSearch", "getSearch", "getTokenIsValid"]),
+    ...mapGetters(["hideSearch", "getSearch", "getTokenIsValid", "getEnvVersion", "getEnvStatus", "getEnvInfo"]),
     search: {
       get() {
         return this.getSearch;

@@ -3,6 +3,12 @@ export default {
   updateSearch(state, payload) {
     state.search = payload;
   },
+  updateEnvVersion(state, payload) {
+    state.envVersion = payload;
+  },
+  updateEnvInfo(state, payload) {
+    state.envInfo = payload;
+  },
   updateHideSearch(state, payload) {
     state.hideSearch = payload;
   },

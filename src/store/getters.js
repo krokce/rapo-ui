@@ -8,6 +8,12 @@ export default {
   getSearch: (state) => {
     return state.search;
   },
+  getEnvVersion: (state) => {
+    return state.envVersion;
+  },
+  getEnvInfo: (state) => {
+    return state.envInfo;
+  },
   hideSearch: (state) => {
     return state.hideSearch;
   },

@@ -12,6 +12,8 @@ const store = createStore({
       controlResults: [],
       tokenIsValid: false,
       tokenValue: "",
+      envVersion: null,
+      envInfo: null,
     };
   },
   mutations: rootMutations,
