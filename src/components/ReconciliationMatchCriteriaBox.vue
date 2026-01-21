@@ -92,7 +92,6 @@
               (value) => {
                 ruleConfigObject.correlation_config[index].formula_mode = value;
                 if (value) {
-                  ruleConfigObject.correlation_config[index].formula_alias = ruleConfigObject.correlation_config[index].field_a;
                   ruleConfigObject.correlation_config[index].field_a = 'a.' + ruleConfigObject.correlation_config[index].field_a;
                   ruleConfigObject.correlation_config[index].field_b = 'b.' + ruleConfigObject.correlation_config[index].field_b;
                 } else {
@@ -102,20 +101,9 @@
               }
             ">
             <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-              In "Formula mode" you can use expressions instead of field names, e.g. "a.AMOUNT + a.TAX"
+              In "Formula mode" you can use expressions instead of field names, e.g. "'0' || substr(a.MSISDN, 3)"
             </q-tooltip>
           </q-select>
-          <q-input
-            v-if="ruleConfigObject.correlation_config[index].formula_mode"
-            outlined
-            class="col-2"
-            v-model="ruleConfigObject.correlation_config[index].formula_alias"
-            label="Formula alias">
-            <template v-slot:prepend>
-              <q-icon name="fas fa-font" @click.stop.prevent />
-            </template>
-            <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]"> Name to be used when presenting the discrepancies </q-tooltip>
-          </q-input>
 
           <q-btn size="sm" color="primary" flat round icon="fas fa-minus" @click="removeCorrelationConfig(index)" />
           <q-btn
@@ -155,6 +143,7 @@ export default {
       this.ruleConfigObject.correlation_config.push({
         field_a: this.datasourceAColumns[0],
         field_b: this.datasourceBColumns[0],
+        formula_mode: false,
         allow_null: false,
       });
     },

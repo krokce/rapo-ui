@@ -105,7 +105,7 @@ export default {
           {
             menuText: "Insert log line (using vars)",
             exampleText:
-              "insert into log_sp_run\nvalues ('{control_name} with PID: {process_id} executed', 'COMPLETE', to_date('{control_date:%Y%m%d}', 'yyyymmdd'), sysdate, null, null);",
+              "insert into log_sp_run\nvalues (\n    '{control_name} with PID: {process_id} executed for period from {control_date_from:%Y-%m-%d} to {control_date_to:%Y-%m-%d}', \n    'COMPLETE', \n    to_date('{control_date:%Y%m%d}', 'yyyymmdd'), \n    sysdate, \n    null, \n    null\n);"
           },
           {
             menuText: "Complex preparation example (using vars)",
@@ -136,7 +136,7 @@ export default {
           {
             menuText: "Insert log line (using vars)",
             exampleText:
-              "insert into log_sp_run\nvalues ('{control_name} with PID: {process_id} executed', 'COMPLETE', to_date('{control_date:%Y%m%d}', 'yyyymmdd'), sysdate, null, null);",
+              "insert into log_sp_run\nvalues (\n    '{control_name} with PID: {process_id} executed for period from {control_date_from:%Y-%m-%d} to {control_date_to:%Y-%m-%d}', \n    'COMPLETE', \n    to_date('{control_date:%Y%m%d}', 'yyyymmdd'), \n    sysdate, \n    null, \n    null\n);"
           },
           {
             menuText: "Complex completion example (using vars)",
