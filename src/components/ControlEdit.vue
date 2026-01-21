@@ -842,7 +842,7 @@
                             })
                           }}
                         </span>
-                        <span v-else>
+                        <span v-else @click="copyFetchSQLToClipboard(control_log, this.control.control_type == 'ANL' ? 'T' : 'A')">
                           {{
                             (Number(control_log.fetched_number_a) + Number(control_log.fetched_number)).toLocaleString(undefined, {
                               minimumFractionDigits: 0,
@@ -852,12 +852,14 @@
                         </span>
                       </td>
                       <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
-                        {{
-                          (Number(control_log.fetched_number_b) + Number(control_log.fetched_number)).toLocaleString(undefined, {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0,
-                          })
-                        }}
+                        <span @click="copyFetchSQLToClipboard(control_log, this.control.control_type == 'ANL' ? 'T' : 'B')">
+                          {{
+                            Number(control_log.fetched_number_b).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })
+                          }}
+                        </span>
                       </td>
                       <td class="text-right" :class="{ 'new-day-separator': newDaySeparator(index) }">
                         <span
@@ -1838,6 +1840,71 @@ export default {
           // console.log('Cancel')
         });
     },
+    copyFetchSQLToClipboard(control, side) {
+      control.control_name = this.control.control_name;
+      control.control_type = this.control.control_type;
+
+      if (control.control_type == "REP") {
+        this.$q.notify({ type: "negative", message: "Source B SQL generation is not possible for Reports." });
+        return;
+      }
+
+      var statement = "";
+      if (side == "A") {
+        statement =
+          "select * from " +
+          this.control.source_name_a +
+          "\nwhere " +
+          this.control.source_date_field_a +
+          " between to_date('" +
+          this.toDateTimeString(control.date_from) +
+          "' , 'YYYY-MM-DD HH24:MI:SS')\n\tand to_date('" +
+          this.toDateTimeString(control.date_to) +
+          "' , 'YYYY-MM-DD HH24:MI:SS')\n\tand " +
+          (this.control.source_filter_a ? this.control.source_filter_a : "1=1") +
+          ";";
+      } else if (side == "B") {
+        statement =
+          "select * from " +
+          this.control.source_name_b +
+          "\nwhere " +
+          this.control.source_date_field_b +
+          " between to_date('" +
+          this.toDateTimeString(control.date_from) +
+          "' , 'YYYY-MM-DD HH24:MI:SS')\n\tand to_date('" +
+          this.toDateTimeString(control.date_to) +
+          "' , 'YYYY-MM-DD HH24:MI:SS')\n\tand " +
+          (this.control.source_filter_b ? this.control.source_filter_b : "1=1") +
+          ";";
+      } else {
+        statement =
+          "select * from " +
+          this.control.source_name +
+          "\nwhere " +
+          (this.control.source_date_field?(this.control.source_date_field +
+          " between to_date('" +
+          this.toDateTimeString(control.date_from) +
+          "' , 'YYYY-MM-DD HH24:MI:SS')\n\tand to_date('" +
+          this.toDateTimeString(control.date_to) +
+          "' , 'YYYY-MM-DD HH24:MI:SS')\n\tand "):"") +
+          (this.control.source_filter ? this.control.source_filter : "1=1") +
+          ";";
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = statement;
+      textarea.style.position = "fixed";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        this.$q.notify({ type: "positive", message: "Fetched records " + (side=='T'?'A':side) + "-side SQL statement copied to clipboard: " + textarea.value });
+      } catch (err) {
+        this.$q.notify({ type: "negative", message: "Failed to copy SQL to clipboard" });
+      }
+      document.body.removeChild(textarea);
+    },
     copyToClipboard(control, side) {
       control.control_name = this.control.control_name;
       control.control_type = this.control.control_type;
@@ -1855,7 +1922,7 @@ export default {
       textarea.select();
       try {
         document.execCommand("copy");
-        this.$q.notify({ type: "positive", message: "SQL statement copied to clipboard: " + textarea.value });
+        this.$q.notify({ type: "positive", message: "Discrepancies " + (side=='T'?'A':side) + "-side SQL statement copied to clipboard: " + textarea.value });
       } catch (err) {
         this.$q.notify({ type: "negative", message: "Failed to copy SQL to clipboard" });
       }
