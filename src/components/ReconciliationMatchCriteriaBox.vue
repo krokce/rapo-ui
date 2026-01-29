@@ -95,8 +95,8 @@
                   ruleConfigObject.correlation_config[index].field_a = 'a.' + ruleConfigObject.correlation_config[index].field_a;
                   ruleConfigObject.correlation_config[index].field_b = 'b.' + ruleConfigObject.correlation_config[index].field_b;
                 } else {
-                  ruleConfigObject.correlation_config[index].field_a = datasourceAColumns[0];
-                  ruleConfigObject.correlation_config[index].field_b = datasourceBColumns[0];
+                  ruleConfigObject.correlation_config[index].field_a = null;
+                  ruleConfigObject.correlation_config[index].field_b = null;
                 }
               }
             ">

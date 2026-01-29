@@ -118,8 +118,8 @@
                   ruleConfigObject.discrepancy_config[index].field_a = 'a.' + ruleConfigObject.discrepancy_config[index].field_a;
                   ruleConfigObject.discrepancy_config[index].field_b = 'b.' + ruleConfigObject.discrepancy_config[index].field_b;
                 } else {
-                  ruleConfigObject.discrepancy_config[index].field_a = datasourceAColumns[0];
-                  ruleConfigObject.discrepancy_config[index].field_b = datasourceBColumns[0];
+                  ruleConfigObject.discrepancy_config[index].field_a = null;
+                  ruleConfigObject.discrepancy_config[index].field_b = null;
                 }
               }
             ">
