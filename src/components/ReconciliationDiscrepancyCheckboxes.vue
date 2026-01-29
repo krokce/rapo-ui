@@ -86,10 +86,11 @@
 
         <q-checkbox size="lg" class="col-2" color="blue" label="Discrepancy matching" v-model="ruleConfigObject.discrepancy_matching">
           <q-tooltip anchor="top left" self="bottom left" :offset="[0, 0]">
-            Reconciliation parameter that allows to classify duplicates as losses if there is a numeric discrapancy with the<br />
-            record on the other side of the control. It is useful to use this extension together with the "Allow Duplicates" feature <br />
-            so that you identify duplicates that are actually errors from the results, and only ignore those that are successfully matched <br />Default is
-            "No".
+            Consider also mismatch criteria (discrepancy config) when identifying duplicates. If enabled and there is a discrepancy <br />
+            above tolerance with the record on the other side the record will be marked as error instead of duplicate. <br />
+            Useful together with the "Allow Duplicates" feature so that you identify duplicates that are actually errors,<br />
+            and only ignore those that are successfully matched. <br />
+            Default is "Yes".
           </q-tooltip>
         </q-checkbox>
       </q-card-section>
@@ -131,15 +132,18 @@
             { label: 'Rank', value: 'rank' },
             { label: 'Min-Max', value: 'minmax' },
             { label: 'Z-Score', value: 'z_norm' },
+            { label: 'Relative Distance', value: 'srd' },
           ]"
           label="Normalization">
           <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-            Useful in cases where correlation keys do not guarantee a unique connection, <br />while numerics have a narrow spread and can produce similar or
-            identical values when summed. <br />Default is "None".
+            Useful in cases where correlation keys do not guarantee a unique match, and distances <br /> 
+            based on discrepancy config fields produce similar or identical values when summed. <br />
+            Default is "None".
             <ul>
-              <li>Rank: Replaces numerical values with their rank (order) within the sorted dataset</li>
-              <li>Min-Max: Scales numerical values to a 0-1 range based on the minimum and maximum values in the dataset</li>
-              <li>Z-Score: Normalizes numerical values based on their distance from the mean in terms of standard deviations</li>
+              <li>Rank: Replace numerical values with their rank (order) within the sorted dataset</li>
+              <li>Min-Max: Scale numerical values to a 0-1 range based on the minimum and maximum values in the dataset</li>
+              <li>Z-Score: Normalize numerical values based on their distance from the mean in terms of standard deviations</li>
+              <li>Relative Distance: Use squared A->B distance relative to the defined discrepancy tolerance for ranking</li>
             </ul>
           </q-tooltip>
         </q-select>
@@ -193,6 +197,9 @@ export default {
     }
     if (this.ruleConfigObject.fuzzy_optimization == null || this.ruleConfigObject.fuzzy_optimization == undefined) {
       this.ruleConfigObject.fuzzy_optimization = true;
+    }
+    if (this.ruleConfigObject.discrepancy_matching == null || this.ruleConfigObject.discrepancy_matching == undefined) {
+      this.ruleConfigObject.discrepancy_matching = true;
     }
   },
 };
