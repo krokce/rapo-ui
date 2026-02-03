@@ -35,7 +35,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-grey-2" :width="200" :breakpoint="500" v-if="getTokenIsValid">
+    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-grey-2" :width="170" :breakpoint="500" v-if="getTokenIsValid">
       <q-scroll-area class="fit">
         <q-list padding class="menu-list">
           <q-item v-for="link in menuLinks" :key="link.text" v-ripple clickable :to="link.route">

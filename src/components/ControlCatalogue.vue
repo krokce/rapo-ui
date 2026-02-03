@@ -233,7 +233,7 @@
 
             <td style="width: 100px">
               <div class="row justify-start items-center">
-                <schedule-present-box :schedule="control.schedule_config"></schedule-present-box>
+                <schedule-present-box :schedule="control.schedule_config" :period_back="control.period_back" :period_type="control.period_type"></schedule-present-box>
               </div>
             </td>
 

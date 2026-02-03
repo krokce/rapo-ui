@@ -1,29 +1,37 @@
 <template>
-  <q-chip
-    size="12px"
-    class="row items-center"
-    :class="{
-      'bg-blue-grey-7': schedule_type === 'D',
-      'bg-blue-grey-5': schedule_type === 'W',
-      'bg-blue-grey-4': schedule_type === 'M',
-      'bg-deep-purple-3': schedule_type === 'C',
-      'bg-deep-purple-2 text-grey-9': schedule_type === 'X',
-    }"
-    text-color="white"
-    icon="alarm">
-    {{ schedule_text }}
-  </q-chip>
+  <span>
+    <q-chip size="12px" class="row items-center" color="grey-6" icon="fas fa-history" text-color="white">
+      {{ period }}
+    </q-chip>
+    <q-chip
+      size="12px"
+      class="row items-center"
+      :class="{
+        'bg-blue-grey-7': schedule_type === 'D',
+        'bg-blue-grey-5': schedule_type === 'W',
+        'bg-blue-grey-4': schedule_type === 'M',
+        'bg-deep-purple-3': schedule_type === 'C',
+        'bg-deep-purple-2 text-grey-9': schedule_type === 'X',
+      }"
+      text-color="white"
+      icon="alarm">
+      {{ schedule_text }}
+    </q-chip>
+  </span>
 </template>
 
 <script>
 export default {
-  props: ["schedule"],
+  props: ["schedule", "period_back", "period_type"],
   data() {
     return {
       schedule_object: {},
     };
   },
   computed: {
+    period() {
+      return this.period_back + "-" + this.period_type;
+    },
     schedule_type() {
       if (
         String(this.schedule).indexOf("/") > -1 ||
