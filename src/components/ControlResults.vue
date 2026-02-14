@@ -64,26 +64,71 @@
       <q-markup-table dense>
         <thead>
           <tr class="bg-blue-grey-2">
-            <th class="text-left">Type</th>
-            <th class="text-left">Start</th>
-            <th class="text-right">Runtime</th>
-            <th class="text-center">PID</th>
-            <th class="text-left">Processname</th>
-            <th class="text-left">Run from</th>
-            <th class="text-left">Run to</th>
-            <th class="text-right">Fetched A</th>
-            <th class="text-right">Fetched B</th>
-            <th class="text-right">Discr. A</th>
-            <th class="text-right">Discr. B</th>
-            <th class="text-right">Err. lvl A [%]</th>
-            <th class="text-right">Err. lvl B [%]</th>
-            <th class="text-right">PV</th>
-            <th class="text-left">Status</th>
+            <th class="text-left sortable" @click="setSort('control_type')">
+              Type
+              <q-icon v-if="sort.key === 'control_type'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-left sortable" @click="setSort('start_date')">
+              Start
+              <q-icon v-if="sort.key === 'start_date'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-right sortable" @click="setSort('duration_minutes')">
+              Runtime
+              <q-icon v-if="sort.key === 'duration_minutes'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-center sortable" @click="setSort('process_id')">
+              PID
+              <q-icon v-if="sort.key === 'process_id'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-left sortable" @click="setSort('control_name')">
+              Processname
+              <q-icon v-if="sort.key === 'control_name'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-left sortable" @click="setSort('date_from')">
+              Run from
+              <q-icon v-if="sort.key === 'date_from'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-left sortable" @click="setSort('date_to')">
+              Run to
+              <q-icon v-if="sort.key === 'date_to'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-right sortable" @click="setSort('fetched_number_a')">
+              Fetched A
+              <q-icon v-if="sort.key === 'fetched_number_a'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-right sortable" @click="setSort('fetched_number_b')">
+              Fetched B
+              <q-icon v-if="sort.key === 'fetched_number_b'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-right sortable" @click="setSort('error_number_a')">
+              Discr. A
+              <q-icon v-if="sort.key === 'error_number_a'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-right sortable" @click="setSort('error_number_b')">
+              Discr. B
+              <q-icon v-if="sort.key === 'error_number_b'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-right sortable" @click="setSort('error_level_a')">
+              Err. lvl A [%]
+              <q-icon v-if="sort.key === 'error_level_a'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-right sortable" @click="setSort('error_level_b')">
+              Err. lvl B [%]
+              <q-icon v-if="sort.key === 'error_level_b'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-right sortable" @click="setSort('prerequisite_value')">
+              PV
+              <q-icon v-if="sort.key === 'prerequisite_value'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-left sortable" @click="setSort('status')">
+              Status
+              <q-icon v-if="sort.key === 'status'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
             <th class="text-left"></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(control, index) in filteredControlResults" :key="control.process_id">
+          <tr v-for="(control, index) in sortedControlResults" :key="control.process_id">
             <td class="text-center" :class="{ 'new-day-separator': newDaySeparator(index) }">
               <q-chip
                 clickable
@@ -297,14 +342,18 @@ export default {
         type: null,
         status: [],
       },
+      sort: {
+        key: "start_date",
+        dir: "desc",
+      },
     };
   },
   methods: {
     ...mapActions(["updateControlResults", "updateSearch"]),
     newDaySeparator(index) {
       if (index > 0) {
-        const prev_date = this.toDateString(this.filteredControlResults[index - 1].start_date);
-        const curr_date = this.toDateString(this.filteredControlResults[index].start_date);
+        const prev_date = this.toDateString(this.sortedControlResults[index - 1].start_date);
+        const curr_date = this.toDateString(this.sortedControlResults[index].start_date);
         if (prev_date != curr_date) {
           return true;
         }
@@ -511,9 +560,40 @@ export default {
       this.filter.status = [];
       // this.updateSearch("");
     },
+    setSort(key) {
+      if (this.sort.key === key) {
+        this.sort.dir = this.sort.dir === "asc" ? "desc" : "asc";
+        return;
+      }
+      this.sort.key = key;
+      this.sort.dir = "asc";
+    },
+    getSortValue(item) {
+      const val = item[this.sort.key];
+      if (this.sort.key === "start_date" || this.sort.key === "date_from" || this.sort.key === "date_to") {
+        return val ? new Date(val).getTime() : null;
+      }
+      return val ?? null;
+    },
   },
   computed: {
     ...mapGetters(["getSearch"]),
+    sortedControlResults() {
+      const dir = this.sort.dir === "asc" ? 1 : -1;
+      return [...this.filteredControlResults].sort((a, b) => {
+        const aVal = this.getSortValue(a);
+        const bVal = this.getSortValue(b);
+
+        if (aVal === bVal) return 0;
+        if (aVal == null) return 1 * dir;
+        if (bVal == null) return -1 * dir;
+
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          return (aVal - bVal) * dir;
+        }
+        return String(aVal).localeCompare(String(bVal)) * dir;
+      });
+    },
     filteredControlResults() {
       const s = this.getSearch;
       var data = this.controlResults;
@@ -558,5 +638,10 @@ a:visited {
 
 .new-day-separator {
   border-top: 2px solid #cfd8dc !important;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
 }
 </style>

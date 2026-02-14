@@ -76,15 +76,27 @@
       <q-markup-table>
         <thead>
           <tr class="bg-blue-grey-2">
-            <th class="text-center" style="width: 50px">Type</th>
-            <th class="text-left">Name</th>
-            <th class="text-left">Description</th>
-            <th class="text-left">Schedule</th>
+            <th class="text-center sortable" style="width: 50px" @click="setSort('control_type')">
+              Type
+              <q-icon v-if="sort.key === 'control_type'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-left sortable" @click="setSort('control_name')">
+              Name
+              <q-icon v-if="sort.key === 'control_name'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-left sortable" @click="setSort('control_description')">
+              Description
+              <q-icon v-if="sort.key === 'control_description'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
+            <th class="text-left sortable" @click="setSort('schedule')">
+              Schedule
+              <q-icon v-if="sort.key === 'schedule'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+            </th>
             <th class="text-left"></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="control in filteredControlCatalogue" :key="control.control_id">
+          <tr v-for="control in sortedControlCatalogue" :key="control.control_id">
             <td>
               <q-chip
                 size="12px"
@@ -319,6 +331,11 @@ export default {
         type: null,
         status: null,
         other_attributes: [],
+        system: null,
+      },
+      sort: {
+        key: null,
+        dir: "asc",
       },
     };
   },
@@ -370,9 +387,42 @@ export default {
       this.filter.system = null;
       // this.updateSearch("");
     },
+    setSort(key) {
+      if (this.sort.key === key) {
+        this.sort.dir = this.sort.dir === "asc" ? "desc" : "asc";
+        return;
+      }
+      this.sort.key = key;
+      this.sort.dir = "asc";
+    },
+    getSortValue(item) {
+      if (this.sort.key === "schedule") {
+        return item.schedule_config || "";
+      }
+      return item[this.sort.key] ?? "";
+    },
   },
   computed: {
     ...mapGetters(["getSearch"]),
+    sortedControlCatalogue() {
+      if (!this.sort.key) {
+        return this.filteredControlCatalogue;
+      }
+      const dir = this.sort.dir === "asc" ? 1 : -1;
+      return [...this.filteredControlCatalogue].sort((a, b) => {
+        const aVal = this.getSortValue(a);
+        const bVal = this.getSortValue(b);
+
+        if (aVal === bVal) return 0;
+        if (aVal == null) return 1 * dir;
+        if (bVal == null) return -1 * dir;
+
+        if (typeof aVal === "number" && typeof bVal === "number") {
+          return (aVal - bVal) * dir;
+        }
+        return String(aVal).localeCompare(String(bVal)) * dir;
+      });
+    },
     filteredControlCatalogue() {
       const s = this.getSearch;
       var data = this.controlCatalogue;
@@ -417,4 +467,9 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+</style>
