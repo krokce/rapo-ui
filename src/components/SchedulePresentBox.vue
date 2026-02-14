@@ -1,6 +1,6 @@
 <template>
   <span>
-    <q-chip size="12px" class="row items-center" color="grey-6" icon="fas fa-history" text-color="white">
+    <q-chip size="12px" class="row items-center period-chip" color="grey-6" icon="fas fa-history" text-color="white">
       {{ period }}
     </q-chip>
     <q-chip
@@ -30,7 +30,17 @@ export default {
   },
   computed: {
     period() {
-      return this.period_back + "-" + this.period_type;
+      const back = Number(this.period_back);
+      const isPlural = !Number.isNaN(back) ? back !== 1 : String(this.period_back) !== "1";
+      const type =
+        this.period_type === "D"
+          ? "Day"
+          : this.period_type === "W"
+          ? "Week"
+          : this.period_type === "M"
+          ? "Month"
+          : String(this.period_type || "");
+      return `${this.period_back} ${type}${isPlural && type ? "s" : ""}`;
     },
     schedule_type() {
       if (
@@ -99,3 +109,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.period-chip {
+  width: 80px;
+  min-width: 50px;
+  display: inline-flex;
+  justify-content: center;
+}
+</style>
