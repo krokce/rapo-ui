@@ -558,6 +558,8 @@ export default {
       this.filter.control_name = null;
       this.filter.type = null;
       this.filter.status = [];
+      this.sort.key = null;
+      this.sort.dir = "asc";
       // this.updateSearch("");
     },
     setSort(key) {

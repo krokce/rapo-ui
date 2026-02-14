@@ -385,6 +385,8 @@ export default {
       this.filter.status = null;
       this.filter.other_attributes = [];
       this.filter.system = null;
+      this.sort.key = null;
+      this.sort.dir = "asc";
       // this.updateSearch("");
     },
     setSort(key) {
@@ -397,7 +399,7 @@ export default {
     },
     getSortValue(item) {
       if (this.sort.key === "schedule") {
-        return item.schedule_config || "";
+        return item.period_back ?? null;
       }
       return item[this.sort.key] ?? "";
     },
