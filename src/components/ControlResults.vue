@@ -395,6 +395,14 @@ export default {
     round(val, places) {
       return Math.round(val * Math.pow(10, places)) / Math.pow(10, places);
     },
+    parseNumericSortValue(val) {
+      if (val == null) return null;
+      if (typeof val === "number") {
+        return Number.isFinite(val) ? val : null;
+      }
+      const match = String(val).match(/-?\d+(?:\.\d+)?/);
+      return match ? Number(match[0]) : null;
+    },
     navigateToEditControl(control) {
       this.$router.push({ name: "edit-control", params: { controlId: control.control_id } });
     },
@@ -574,6 +582,9 @@ export default {
       const val = item[this.sort.key];
       if (this.sort.key === "start_date" || this.sort.key === "date_from" || this.sort.key === "date_to") {
         return val ? new Date(val).getTime() : null;
+      }
+      if (this.sort.key === "error_level_a" || this.sort.key === "error_level_b") {
+        return this.parseNumericSortValue(val);
       }
       return val ?? null;
     },
