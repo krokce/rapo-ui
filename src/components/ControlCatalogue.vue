@@ -419,8 +419,14 @@ export default {
         const schedule = JSON.parse(item.schedule_config);
         const hour = this.parseScheduleNumber(schedule?.hour);
         const min = this.parseScheduleNumber(schedule?.min);
-        const minutes = hour != null && min != null ? hour * 60 + min : null;
-        return { periodBack, minutes };
+        const sec = this.parseScheduleNumber(schedule?.sec);
+        const seconds =
+          hour != null && min != null && sec != null
+            ? hour * 3600 + min * 60 + sec
+            : hour != null && min != null
+            ? hour * 3600 + min * 60
+            : null;
+        return { periodBack, minutes: seconds };
       } catch (err) {
         return { periodBack, minutes: null };
       }
