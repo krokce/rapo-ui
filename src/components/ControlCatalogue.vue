@@ -412,8 +412,14 @@ export default {
     },
     getScheduleSortValues(item) {
       const periodBack = item.period_back ?? null;
+      const periodType = item.period_type ?? null;
+      let periodBackDays = null;
+      if (periodBack != null) {
+        const multiplier = periodType === "W" ? 7 : periodType === "M" ? 30 : 1;
+        periodBackDays = periodBack * multiplier;
+      }
       if (!item.schedule_config) {
-        return { periodBack, minutes: null };
+        return { periodBack, periodBackDays, minutes: null };
       }
       try {
         const schedule = JSON.parse(item.schedule_config);
@@ -426,14 +432,14 @@ export default {
             : hour != null && min != null
             ? hour * 3600 + min * 60
             : null;
-        return { periodBack, minutes: seconds };
+        return { periodBack, periodBackDays, minutes: seconds };
       } catch (err) {
-        return { periodBack, minutes: null };
+        return { periodBack, periodBackDays, minutes: null };
       }
     },
     getSortValue(item) {
       if (this.sort.key === "schedule_days") {
-        return item.period_back ?? null;
+        return this.getScheduleSortValues(item).periodBackDays;
       }
       if (this.sort.key === "schedule_time") {
         return this.getScheduleSortValues(item).minutes;
