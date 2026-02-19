@@ -88,9 +88,12 @@
               Description
               <q-icon v-if="sort.key === 'control_description'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
             </th>
-            <th class="text-left sortable" @click="setSort('schedule')">
-              Schedule
-              <q-icon v-if="sort.key === 'schedule'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
+
+            <th class="text-left">
+              <span class="text-left sortable" @click="setSort('schedule_days')"> Periods back</span> 
+              <q-icon v-if="sort.key === 'schedule_days'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" /> / 
+              <span class="text-left sortable" @click="setSort('schedule_time')"> Schedule</span>
+              <q-icon v-if="sort.key === 'schedule_time'" :name="sort.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'" size="12px" />
             </th>
             <th class="text-left"></th>
           </tr>
@@ -242,7 +245,6 @@
                 
               </div>
             </td>
-
             <td style="width: 100px">
               <div class="row justify-start items-center">
                 <schedule-present-box :schedule="control.schedule_config" :period_back="control.period_back" :period_type="control.period_type"></schedule-present-box>
@@ -397,9 +399,38 @@ export default {
       this.sort.key = key;
       this.sort.dir = "asc";
     },
+    parseScheduleNumber(val) {
+      if (val == null) return null;
+      if (Array.isArray(val)) {
+        return this.parseScheduleNumber(val[0]);
+      }
+      if (typeof val === "number") {
+        return Number.isFinite(val) ? val : null;
+      }
+      const match = String(val).match(/-?\d+/);
+      return match ? Number(match[0]) : null;
+    },
+    getScheduleSortValues(item) {
+      const periodBack = item.period_back ?? null;
+      if (!item.schedule_config) {
+        return { periodBack, minutes: null };
+      }
+      try {
+        const schedule = JSON.parse(item.schedule_config);
+        const hour = this.parseScheduleNumber(schedule?.hour);
+        const min = this.parseScheduleNumber(schedule?.min);
+        const minutes = hour != null && min != null ? hour * 60 + min : null;
+        return { periodBack, minutes };
+      } catch (err) {
+        return { periodBack, minutes: null };
+      }
+    },
     getSortValue(item) {
-      if (this.sort.key === "schedule") {
+      if (this.sort.key === "schedule_days") {
         return item.period_back ?? null;
+      }
+      if (this.sort.key === "schedule_time") {
+        return this.getScheduleSortValues(item).minutes;
       }
       return item[this.sort.key] ?? "";
     },
@@ -412,6 +443,27 @@ export default {
       }
       const dir = this.sort.dir === "asc" ? 1 : -1;
       return [...this.filteredControlCatalogue].sort((a, b) => {
+        if (this.sort.key === "schedule_days") {
+          const aVal = this.getSortValue(a);
+          const bVal = this.getSortValue(b);
+
+          if (aVal === bVal) return 0;
+          if (aVal == null) return 1 * dir;
+          if (bVal == null) return -1 * dir;
+
+          return (aVal - bVal) * dir;
+        }
+
+        if (this.sort.key === "schedule_time") {
+          const aSchedule = this.getScheduleSortValues(a);
+          const bSchedule = this.getScheduleSortValues(b);
+
+          if (aSchedule.minutes === bSchedule.minutes) return 0;
+          if (aSchedule.minutes == null) return 1 * dir;
+          if (bSchedule.minutes == null) return -1 * dir;
+          return (aSchedule.minutes - bSchedule.minutes) * dir;
+        }
+
         const aVal = this.getSortValue(a);
         const bVal = this.getSortValue(b);
 
