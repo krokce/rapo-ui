@@ -36,7 +36,7 @@ export default {
     };
   },
   methods: {
-    ...mapActions(["validateToken", "updateEnvVersion", "updateEnvInfo"]),
+    ...mapActions(["validateToken", "updateEnvVersion", "updateEnvInfo", "updateEnvParameters"]),
     async connect(token) {
       this.tokenValidationInProgress = true;
       const validated = await this.validateToken(token);
@@ -47,6 +47,7 @@ export default {
       } else {
         this.updateEnvVersion();
         this.updateEnvInfo();
+        this.updateEnvParameters();
         if (this.rememberToken) {
           this.$q.cookies.set("rapo_token", token, { SameSite: "Strict", expires: "365d" });
         }

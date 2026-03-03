@@ -14,6 +14,9 @@ export default {
   getEnvInfo: (state) => {
     return state.envInfo;
   },
+  getEnvParameters: (state) => {
+    return state.envParameters;
+  },
   hideSearch: (state) => {
     return state.hideSearch;
   },

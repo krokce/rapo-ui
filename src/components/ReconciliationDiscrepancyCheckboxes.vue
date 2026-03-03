@@ -90,7 +90,7 @@
             above tolerance with the record on the other side the record will be marked as error instead of duplicate. <br />
             Useful together with the "Allow Duplicates" feature so that you identify duplicates that are actually errors,<br />
             and only ignore those that are successfully matched. <br />
-            Default is "Yes".
+            Default is "{{ getEnvParameters && getEnvParameters.discrepancy_matching != null ? getEnvParameters.discrepancy_matching + ' (rapo.ini)' : 'false (App)' }}".
           </q-tooltip>
         </q-checkbox>
       </q-card-section>
@@ -117,7 +117,7 @@
             Reconciliation parameter that allows to join records within a correlation cluster of the same dimension (1k1, 2k2, 3k3, etc.) using a simple
             positional method with sorting by the sum of numerical values.
             <br />Such clusters are formed if the correlation keys do not provide a unique connection and several records on one side are connected to several
-            records on the other. <br />Default is "Yes".
+            records on the other. <br />Default is "{{ getEnvParameters && getEnvParameters.fuzzy_optimization != null ? getEnvParameters.fuzzy_optimization + ' (rapo.ini)' : 'true (App)' }}".
           </q-tooltip>
         </q-select>
 
@@ -128,7 +128,7 @@
           map-options
           v-model="ruleConfigObject.normalization_type"
           :options="[
-            { label: 'None', value: 'none' },
+            { label: 'Default', value: 'default' },
             { label: 'Rank', value: 'rank' },
             { label: 'Min-Max', value: 'minmax' },
             { label: 'Z-Score', value: 'z_norm' },
@@ -136,15 +136,15 @@
           ]"
           label="Normalization">
           <q-tooltip anchor="top left" self="bottom left" :offset="[0, 5]">
-            Useful in cases where correlation keys do not guarantee a unique match, and distances <br /> 
+            Useful in cases where correlation keys do not guarantee a unique match, and distances <br />
             based on discrepancy config fields produce similar or identical values when summed. <br />
-            Default is "None".
             <ul>
               <li>Rank: Replace numerical values with their rank (order) within the sorted dataset</li>
               <li>Min-Max: Scale numerical values to a 0-1 range based on the minimum and maximum values in the dataset</li>
               <li>Z-Score: Normalize numerical values based on their distance from the mean in terms of standard deviations</li>
               <li>Relative Distance: Use squared A->B distance relative to the defined discrepancy tolerance for ranking</li>
             </ul>
+            Default is "{{ getEnvParameters && getEnvParameters.normalization_type ? getEnvParameters.normalization_type + ' (rapo.ini)' : 'none (App)' }}".
           </q-tooltip>
         </q-select>
 
@@ -163,7 +163,7 @@
             If active, the correlation dataset will be limited to x2.5 times of the larger datasource record-count to prevent huge resultsets caused by weak or
             missing match criteria (cross join)
             <br />Note that activating the correlation limit will likely result in up to 30% slower performance. Recomended to be used only during the
-            development phase.
+            development phase. <br />Default is "{{ getEnvParameters && getEnvParameters.correlation_limit != null ? getEnvParameters.correlation_limit + ' (rapo.ini)' : 'false (App)' }}".
           </q-tooltip>
         </q-select>
       </q-card-section>
@@ -172,6 +172,8 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+
 export default {
   props: ["modelValue", "control"],
   emits: ["update:modelValue"],
@@ -179,6 +181,9 @@ export default {
     return {
       ruleConfigObject: this.modelValue,
     };
+  },
+  computed: {
+    ...mapGetters(["getEnvParameters"]),
   },
   watch: {
     ruleConfigObject(newValue) {
@@ -196,10 +201,32 @@ export default {
       this.ruleConfigObject.output_limit_b = this.control.output_limit;
     }
     if (this.ruleConfigObject.fuzzy_optimization == null || this.ruleConfigObject.fuzzy_optimization == undefined) {
-      this.ruleConfigObject.fuzzy_optimization = true;
+      if (this.getEnvParameters && this.getEnvParameters.fuzzy_optimization != null) {
+        this.ruleConfigObject.fuzzy_optimization = this.getEnvParameters.fuzzy_optimization;
+      } else {
+        this.ruleConfigObject.fuzzy_optimization = true; // default value
+      }
     }
     if (this.ruleConfigObject.discrepancy_matching == null || this.ruleConfigObject.discrepancy_matching == undefined) {
-      this.ruleConfigObject.discrepancy_matching = true;
+      if (this.getEnvParameters && this.getEnvParameters.discrepancy_matching != null) {
+        this.ruleConfigObject.discrepancy_matching = this.getEnvParameters.discrepancy_matching;
+      } else {
+        this.ruleConfigObject.discrepancy_matching = false; // default false
+      }
+    }
+    if (this.ruleConfigObject.correlation_limit == null || this.ruleConfigObject.correlation_limit == undefined) {
+      if (this.getEnvParameters && this.getEnvParameters.correlation_limit != null) {
+        this.ruleConfigObject.correlation_limit = this.getEnvParameters.correlation_limit;
+      } else {
+        this.ruleConfigObject.correlation_limit = false; // default false
+      }
+    }
+    if (this.ruleConfigObject.normalization_type == null || this.ruleConfigObject.normalization_type == undefined) {
+      if (this.getEnvParameters && this.getEnvParameters.normalization_type != null) {
+        this.ruleConfigObject.normalization_type = this.getEnvParameters.normalization_type;
+      } else {
+        this.ruleConfigObject.normalization_type = "default"; // default none
+      }
     }
   },
 };

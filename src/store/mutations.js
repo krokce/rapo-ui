@@ -9,6 +9,9 @@ export default {
   updateEnvInfo(state, payload) {
     state.envInfo = payload;
   },
+  updateEnvParameters(state, payload) {
+    state.envParameters = payload;
+  },
   updateHideSearch(state, payload) {
     state.hideSearch = payload;
   },

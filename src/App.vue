@@ -10,8 +10,8 @@
             <span class="text-weight-bold">Rapo</span>
             <span class="text-caption">
               {{ getEnvInfo && getEnvInfo.instance_name ? getEnvInfo.instance_name : "" }}
-              {{ getEnvVersion && getEnvVersion.version ? "v." + getEnvVersion.version : "" }}</span
-            >
+              {{ getEnvVersion && getEnvVersion.version ? "v." + getEnvVersion.version : "" }}
+            </span>
           </q-toolbar-title>
         </q-btn>
 
@@ -25,13 +25,7 @@
         <q-space class="col-2" />
         <span class="text-caption text-weight-light text-teal" v-if="getTokenIsValid">Connected</span>
         <span class="text-caption text-weight-light text-red" v-if="!getTokenIsValid">Disconnected</span>
-        <q-btn round flat color="teal" icon="fas fa-plug fa-rotate-90" @click="disconnect" v-if="getTokenIsValid">
-          <q-tooltip>
-            Disconnect from:<br />
-            <div><strong>Server:</strong>&nbsp;{{ getEnvInfo && getEnvInfo.database_server ? getEnvInfo.database_server : "N/A" }}</div>
-            <div><strong>Database:</strong>&nbsp;{{ getEnvInfo && getEnvInfo.database_name ? getEnvInfo.database_name : "N/A" }}</div>
-          </q-tooltip>
-        </q-btn>
+        <q-btn round flat color="teal" icon="fas fa-plug fa-rotate-90" @click="showDisconnectDialog" v-if="getTokenIsValid" />
       </q-toolbar>
     </q-header>
 
@@ -88,6 +82,104 @@ export default {
     toggleLeftDrawer() {
       this.leftDrawerOpen = !this.leftDrawerOpen;
     },
+    escapeHtml(value) {
+      return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    },
+    flattenEntries(source, parentKey = "") {
+      if (!source || typeof source !== "object") {
+        return [];
+      }
+
+      return Object.entries(source).reduce((entries, [key, value]) => {
+        const fullKey = parentKey ? `${parentKey}.${key}` : key;
+
+        if (Array.isArray(value)) {
+          if (!value.length) {
+            entries.push([fullKey, "[]"]);
+            return entries;
+          }
+
+          value.forEach((item, index) => {
+            const itemKey = `${fullKey}[${index}]`;
+            if (item !== null && typeof item === "object") {
+              entries.push(...this.flattenEntries(item, itemKey));
+            } else {
+              entries.push([itemKey, item]);
+            }
+          });
+          return entries;
+        }
+
+        if (value !== null && typeof value === "object") {
+          const nestedEntries = this.flattenEntries(value, fullKey);
+          if (!nestedEntries.length) {
+            entries.push([fullKey, "{}"]);
+            return entries;
+          }
+          entries.push(...nestedEntries);
+          return entries;
+        }
+
+        entries.push([fullKey, value]);
+        return entries;
+      }, []);
+    },
+    createEnvSection(title, objectValue) {
+      const entries = this.flattenEntries(objectValue);
+      const rows = entries.length
+        ? entries
+            .map(([key, value]) => {
+              const displayValue = value === null || value === undefined || value === "" ? "N/A" : String(value);
+              return `<tr>
+                <td style="padding:2px 10px 2px 0; vertical-align:top; word-break:break-word;">${this.escapeHtml(key)}</td>
+                <td style="padding:2px 0; vertical-align:top;"><strong>${this.escapeHtml(displayValue)}</strong></td>
+              </tr>`;
+            })
+            .join("")
+        : `<tr><td style="padding:2px 0;" colspan="2">N/A</td></tr>`;
+
+      return `
+        <div style="margin-top:8px;">
+          <div style="font-weight:600; margin-bottom:2px;">${this.escapeHtml(this.formatSectionTitle(title))}</div>
+          <table style="border-collapse:collapse; width:100%; font-family:Monospace, sans-serif; font-size:12px; line-height:1.25; table-layout:fixed;">
+            <colgroup>
+              <col style="width:70%;" />
+              <col style="width:30%;" />
+            </colgroup>
+            ${rows}
+          </table>
+        </div>
+        <hr />
+        `;
+    },
+    formatSectionTitle(name) {
+      return name.replace(/^getEnv/, "") || name;
+    },
+    showDisconnectDialog() {
+      const message = `
+        ${this.createEnvSection("getEnvVersion", this.getEnvVersion)}
+        ${this.createEnvSection("getEnvInfo", this.getEnvInfo)}
+        ${this.createEnvSection("getEnvParameters", this.getEnvParameters)}
+      `;
+
+      this.$q
+        .dialog({
+          title: "Instance details",
+          message,
+          html: true,
+          ok: {
+            label: "Disconnect",
+            color: "negative",
+          },
+          cancel: {
+            label: "Close",
+            flat: true,
+          },
+        })
+        .onOk(() => {
+          this.disconnect();
+        });
+    },
     disconnect() {
       if (this.$q.cookies.has("rapo_token")) {
         this.$q.cookies.remove("rapo_token");
@@ -97,7 +189,7 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["hideSearch", "getSearch", "getTokenIsValid", "getEnvVersion", "getEnvStatus", "getEnvInfo"]),
+    ...mapGetters(["hideSearch", "getSearch", "getTokenIsValid", "getEnvVersion", "getEnvInfo", "getEnvParameters"]),
     search: {
       get() {
         return this.getSearch;

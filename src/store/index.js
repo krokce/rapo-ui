@@ -14,6 +14,7 @@ const store = createStore({
       tokenValue: "",
       envVersion: null,
       envInfo: null,
+      envParameters: null,
     };
   },
   mutations: rootMutations,

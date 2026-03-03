@@ -102,6 +102,31 @@ export default {
       LoadingBar.stop();
     }
   },  
+  async updateEnvParameters(context) {
+    try {
+      const response = await fetch("/api/parameters", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${context.getters.getToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      context.commit("updateEnvParameters", data);
+
+      return data;
+    } catch (err) {
+      console.error("Failed to load parameters:", err);
+      throw err; // re-throw so component can catch if needed
+    } finally {
+      LoadingBar.stop();
+    }
+  },  
   updateHideSearch(context, payload) {
     context.commit("updateHideSearch", payload);
   },
